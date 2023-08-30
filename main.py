@@ -5,13 +5,14 @@ from network import Network
 try:
     pygame.init()
     pygame.display.init()
+    pygame.mixer.init()
     Mon_Width, Mon_Height = pygame.display.Info().current_w, pygame.display.Info().current_h
     print(Mon_Width, Mon_Height)
     ZR = 1920 / Mon_Width
     WIN_WIDTH = int(1025 // ZR)
     WIN_HEIGHT = int(900 // ZR)
     print(WIN_WIDTH, WIN_HEIGHT)
-    ip_ad = input("Please enter Server IP. (Computer next to Printer: 192.168.1.20, Rahul's Laptop, 192.168.1.14)")
+    ip_ad = input("Please enter Server IP. (Computer next to Printer: 192.168.1.20, Rahul's Laptop, 192.168.1.14):\n")
     n = Network(ip_ad)
     winCards = []
     winner = ''
@@ -28,8 +29,10 @@ try:
     BoardCards = pygame.image.load(os.path.join('Sequence!!!.png')).convert_alpha()
     USChip = pygame.image.load(os.path.join('Blue.png')).convert_alpha()
     AIChip = pygame.image.load(os.path.join('Red.png')).convert_alpha()
+    turn_change = pygame.mixer.Sound(os.path.join('chip.wav'))
     cardIMGs = {}
     run = True
+    played = True
 
     USChip = pygame.transform.smoothscale(USChip, (int(50 // ZR), int(50 // ZR)))
     AIChip = pygame.transform.smoothscale(AIChip, (int(50 // ZR), int(50 // ZR)))
@@ -37,8 +40,7 @@ try:
     for cardNo in range(52):
         cardIMGs[str(cards[cardNo])] = pygame.image.load(
             os.path.join('Cards', str(cards[cardNo]) + '.png')).convert_alpha()
-        cardIMGs[str(cards[cardNo])] = pygame.transform.smoothscale(cardIMGs[str(cards[cardNo])],
-                                                              (int(80 // ZR), int(112 // ZR)))
+        cardIMGs[str(cards[cardNo])] = pygame.transform.smoothscale(cardIMGs[str(cards[cardNo])], (int(80 // ZR), int(112 // ZR)))
 
 
     def draw_board(curr_board: list, mouse: bool = False, highlight: str = 'xx') -> str:
@@ -52,19 +54,19 @@ try:
             for j in range(10):
                 if curr_board[i][j] == highlight:
                     pygame.draw.rect(win, (255, 255, 0), (
-                    int(((43 + (j * 96)) - j // 5) // ZR), int(((81 + (i * 68)) - i // 2) // ZR), int(88 // ZR),
-                    int(65 // ZR)), border_radius=5)
+                        int(((43 + (j * 96)) - j // 5) // ZR), int(((81 + (i * 68)) - i // 2) // ZR), int(88 // ZR),
+                        int(65 // ZR)), border_radius=5)
                 elif highlight[1] == 'J':
                     if highlight[0] == 'H' or 'S' == highlight[0]:
                         if curr_board[i][j][2:] == 'AI' or curr_board[i][j][2:] == 'US':
                             pygame.draw.rect(win, (255, 255, 0), (
-                            int(((43 + (j * 96)) - j // 5) // ZR), int(((81 + (i * 68)) - i // 2) // ZR), int(88 // ZR),
-                            int(65 // ZR)), border_radius=5)
+                                int(((43 + (j * 96)) - j // 5) // ZR), int(((81 + (i * 68)) - i // 2) // ZR), int(88 // ZR),
+                                int(65 // ZR)), border_radius=5)
                     elif not (curr_board[i][j] == 'xx') and not (
                             curr_board[i][j][2:] == 'AI' or curr_board[i][j][2:] == 'US'):
                         pygame.draw.rect(win, (255, 255, 0), (
-                        int(((43 + (j * 96)) - j // 5) // ZR), int(((81 + (i * 68)) - i // 2) // ZR), int(88 // ZR),
-                        int(65 // ZR)), border_radius=5)
+                            int(((43 + (j * 96)) - j // 5) // ZR), int(((81 + (i * 68)) - i // 2) // ZR), int(88 // ZR),
+                            int(65 // ZR)), border_radius=5)
                 card = pygame.Rect(
                     (int((45 + (j * 96)) // ZR), int((83 + (i * 68)) // ZR), int(84 // ZR), int(61 // ZR)))
                 if mouse and card.collidepoint(pos):
@@ -73,8 +75,8 @@ try:
                     for card in winCards:
                         if int(card[0]) == i and j == int(card[1]):
                             pygame.draw.rect(win, (255, 255, 0), (
-                            int(((43 + (j * 96)) - j // 5) // ZR), int(((81 + (i * 68)) - i // 2) // ZR), int(88 // ZR),
-                            int(65 // ZR)), border_radius=5)
+                                int(((43 + (j * 96)) - j // 5) // ZR), int(((81 + (i * 68)) - i // 2) // ZR), int(88 // ZR),
+                                int(65 // ZR)), border_radius=5)
                             break
         win.blit(BoardCards, (int(37 // ZR), int(72 // ZR)))
         for i in range(10):
@@ -108,7 +110,7 @@ try:
 
 
     def main(recent_click: str, hand_cards: list):
-        global card_selected, cards, reply, card_select
+        global card_selected, reply, card_select
         if len(recent_click) == 5 and recent_click[:4] == 'USER':
             card_clicked = hand_cards[int(recent_click[4])]
             card_selected = True
@@ -148,8 +150,8 @@ try:
         ]
 
 
-    def padding(n):
-        return ['None' for _ in range(n)]
+    def padding(No):
+        return ['None' for _ in range(No)]
 
 
     def transpose(grid):
@@ -200,48 +202,48 @@ try:
                         state = '10' + str(j - 4) + str(i)
                 else:
                     counter = 0
-            # FORWARD DIAGONALS CHECK
-            ten_board = transpose(shift(reversed(gameBoard)))
-            counter = 0
-            for i in range(len(ten_board)):
-                for j in range(len(ten_board[i])):
-                    if ten_board[i][j][-2:] == 'US' or ten_board[i][j][-2:] == 'xx':
-                        counter += 1
-                        if counter == 5:
-                            winner = 'US'
-                            state = '11' + str(9 - j) + str(i - j)
-                    else:
-                        counter = 0
-            for i in range(len(ten_board)):
-                for j in range(len(ten_board[i])):
-                    if ten_board[i][j][-2:] == 'AI' or ten_board[i][j][-2:] == 'xx':
-                        counter += 1
-                        if counter == 5:
-                            winner = 'AI'
-                            state = '11' + str(9 - j) + str(i - j)
-                    else:
-                        counter = 0
-            # BACKWARDS DIAGONAL CHECK
-            ten_board = transpose(shift(gameBoard))
-            counter = 0
-            for i in range(len(ten_board)):
-                for j in range(len(ten_board[i])):
-                    if ten_board[i][j][-2:] == 'US' or ten_board[i][j][-2:] == 'xx':
-                        counter += 1
-                        if counter == 5:
-                            winner = 'US'
-                            state = '09' + str(j - 4) + str(i - j + 4)
-                    else:
-                        counter = 0
-            for i in range(len(ten_board)):
-                for j in range(len(ten_board[i])):
-                    if ten_board[i][j][-2:] == 'AI' or ten_board[i][j][-2:] == 'xx':
-                        counter += 1
-                        if counter == 5:
-                            winner = 'AI'
-                            state = '9' + str(j - 4) + str(i)
-                    else:
-                        counter = 0
+        # FORWARD DIAGONALS CHECK
+        ten_board = transpose(shift(reversed(gameBoard)))
+        counter = 0
+        for i in range(len(ten_board)):
+            for j in range(len(ten_board[i])):
+                if ten_board[i][j][-2:] == 'US' or ten_board[i][j][-2:] == 'xx':
+                    counter += 1
+                    if counter == 5:
+                        winner = 'US'
+                        state = '11' + str(9 - j) + str(i - j)
+                else:
+                    counter = 0
+        for i in range(len(ten_board)):
+            for j in range(len(ten_board[i])):
+                if ten_board[i][j][-2:] == 'AI' or ten_board[i][j][-2:] == 'xx':
+                    counter += 1
+                    if counter == 5:
+                        winner = 'AI'
+                        state = '11' + str(9 - j) + str(i - j)
+                else:
+                    counter = 0
+        # BACKWARDS DIAGONAL CHECK
+        ten_board = transpose(shift(gameBoard))
+        counter = 0
+        for i in range(len(ten_board)):
+            for j in range(len(ten_board[i])):
+                if ten_board[i][j][-2:] == 'US' or ten_board[i][j][-2:] == 'xx':
+                    counter += 1
+                    if counter == 5:
+                        winner = 'US'
+                        state = '09' + str(j - 4) + str(i - j + 4)
+                else:
+                    counter = 0
+        for i in range(len(ten_board)):
+            for j in range(len(ten_board[i])):
+                if ten_board[i][j][-2:] == 'AI' or ten_board[i][j][-2:] == 'xx':
+                    counter += 1
+                    if counter == 5:
+                        winner = 'AI'
+                        state = '9' + str(j - 4) + str(i)
+                else:
+                    counter = 0
         if winner:
             winCards.append(str(state[2:]))
             print(state)
@@ -255,6 +257,53 @@ try:
             return str(winner + state)
         else:
             return ''
+
+
+    def animate(old_crd):
+        global cards, board
+        # Old Fly Out
+        for i in range(15):
+            win.fill((9, 66, 19))
+            top_text('OPPONENT\'S TURN')
+            draw_board(board, False, 'xy')
+            for j in range(7):
+                if cards.index(old_crd) != j:
+                    win.blit(cardIMGs[str(cards[j])], (int((200 + (j * 100)) // ZR), int(770 // ZR)))
+                else:
+                    win.blit(cardIMGs[str(cards[j])], (int((200 + (j * 100)) // ZR), int((770 + (i * 8.667)) // ZR)))
+            clock.tick(30)
+            pygame.display.flip()
+            data0 = n.send('ping')
+
+        # Cards Move Left
+        for i in range(15):
+            win.fill((9, 66, 19))
+            top_text('OPPONENT\'S TURN')
+            draw_board(board, False, 'xy')
+            for j in range(7):
+                if j < cards.index(old_crd):
+                    win.blit(cardIMGs[str(cards[j])], (int((200 + (j * 100)) // ZR), int(770 // ZR)))
+                elif j > cards.index(old_crd):
+                    win.blit(cardIMGs[str(cards[j])], (int((200 + (j * 100) - (i * 6.667)) // ZR), int(770 // ZR)))
+            clock.tick(30)
+            pygame.display.flip()
+            data0 = n.send('ping')
+
+        # New Fly Up
+        for i in range(15):
+            win.fill((9, 66, 19))
+            top_text('OPPONENT\'S TURN')
+            draw_board(board, False, 'xy')
+            for j in range(7):
+                if j < cards.index(old_crd):
+                    win.blit(cardIMGs[str(cards[j])], (int((200 + (j * 100)) // ZR), int(770 // ZR)))
+                elif j < 6:
+                    win.blit(cardIMGs[str(cards[j + 1])], (int((200 + (j * 100)) // ZR), int(770 // ZR)))
+                else:
+                    win.blit(cardIMGs[str(cards[7])], (int((200 + (j * 100)) // ZR), int(900 - (i * 8.667) // ZR)))
+            clock.tick(30)
+            pygame.display.flip()
+            data0 = n.send('ping')
 
 
     def brd_unpack(render):
@@ -272,7 +321,7 @@ try:
     def top_text(render):
         text = Font.render(render, True, (255, 255, 255))
         x_val = int(WIN_WIDTH // 2 - text.get_width() // 2)
-        win.blit(text, (int(x_val // ZR), int(25 // ZR)))
+        win.blit(text, (x_val, int(25 // ZR)))
 
 
     pygame.font.init()
@@ -305,14 +354,25 @@ try:
         else:
             top_text(top_txt)
             x = draw_board(board, go, card_select)
-            clicked = draw_cards(cards, go, card_select)
+            clicked = draw_cards(cards[:7], go, card_select)
 
             if x:
                 clicked = x
             if not turn:
                 reply = 'ping'
             else:
-                card_select = main(clicked, cards)
+                card_select = main(clicked, cards[:7])
+                if played:
+                    turn_change.play()
+                    played = False
+                if reply != 'ping':
+                    dataO = n.send(reply)
+                    data = dataO.split('abc!')
+                    board = brd_unpack(data[0])
+                    turn_change.play()
+                    played = True
+                    animate(reply[2:])
+                    continue
         clock.tick(30)
         pygame.display.flip()
         dataO = n.send(reply)
@@ -320,7 +380,8 @@ try:
 except Exception as e:
     print(e)
     with open('ERROR Devlog.txt', 'w') as f:
-        f.write(e)
-        f.write()
-        f.write(board)
-        f.write(cards)
+        f.write(str(e))
+        f.write('\n\n')
+        f.write(str(board))
+        f.write('\n\n')
+        f.write(str(cards))
