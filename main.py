@@ -31,13 +31,13 @@ try:
     cardIMGs = {}
     run = True
 
-    USChip = pygame.transform.scale(USChip, (int(50 // ZR), int(50 // ZR)))
-    AIChip = pygame.transform.scale(AIChip, (int(50 // ZR), int(50 // ZR)))
-    BoardCards = pygame.transform.scale(BoardCards, (int(960 // ZR), int(689 // ZR)))
+    USChip = pygame.transform.smoothscale(USChip, (int(50 // ZR), int(50 // ZR)))
+    AIChip = pygame.transform.smoothscale(AIChip, (int(50 // ZR), int(50 // ZR)))
+    BoardCards = pygame.transform.smoothscale(BoardCards, (int(960 // ZR), int(689 // ZR)))
     for cardNo in range(52):
         cardIMGs[str(cards[cardNo])] = pygame.image.load(
             os.path.join('Cards', str(cards[cardNo]) + '.png')).convert_alpha()
-        cardIMGs[str(cards[cardNo])] = pygame.transform.scale(cardIMGs[str(cards[cardNo])],
+        cardIMGs[str(cards[cardNo])] = pygame.transform.smoothscale(cardIMGs[str(cards[cardNo])],
                                                               (int(80 // ZR), int(112 // ZR)))
 
 
