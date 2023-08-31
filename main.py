@@ -1,3 +1,5 @@
+import copy
+
 import pygame
 import os
 from network import Network
@@ -15,6 +17,9 @@ try:
     ip_ad = input("Please enter Server IP. (Computer next to Printer: 192.168.1.20, Rahul's Laptop, 192.168.1.14):\n")
     n = Network(ip_ad)
     winCards = []
+    highlighter = []
+    detail = {'AI': 0, 'US': 0}
+    sequence_no = {}
     winner = ''
     # 1030, 754
     win = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
@@ -44,6 +49,7 @@ try:
 
 
     def draw_board(curr_board: list, mouse: bool = False, highlight: str = 'xx') -> str:
+        global sequence_no, detail
         pos = pygame.mouse.get_pos()
         pygame.draw.rect(win, (255, 255, 255), (int(34 // ZR), int(72 // ZR), int(967 // ZR), int(692 // ZR)),
                          border_radius=5)
@@ -52,13 +58,21 @@ try:
         return_txt = ''
         for i in range(10):
             for j in range(10):
+                if winCards:
+                    if (str(i) + str(j) in highlighter) or (str(i) + str(j) in winCards):
+                        pygame.draw.rect(win, (0, 0, 255), (
+                            int(((43 + (j * 96)) - j // 5) // ZR), int(((81 + (i * 68)) - i // 2) // ZR), int(88 // ZR),
+                            int(65 // ZR)), border_radius=5)
                 if curr_board[i][j] == highlight:
                     pygame.draw.rect(win, (255, 255, 0), (
                         int(((43 + (j * 96)) - j // 5) // ZR), int(((81 + (i * 68)) - i // 2) // ZR), int(88 // ZR),
                         int(65 // ZR)), border_radius=5)
                 elif highlight[1] == 'J':
                     if highlight[0] == 'H' or 'S' == highlight[0]:
-                        if curr_board[i][j][2:] == 'AI' or curr_board[i][j][2:] == 'US':
+                        tester_board = copy.deepcopy(curr_board)
+                        tester_board[i][j] = tester_board[i][j][:2]
+                        is_five(tester_board)
+                        if (len(curr_board[i][j]) == 4) and (sequence_no == detail):
                             pygame.draw.rect(win, (255, 255, 0), (
                                 int(((43 + (j * 96)) - j // 5) // ZR), int(((81 + (i * 68)) - i // 2) // ZR), int(88 // ZR),
                                 int(65 // ZR)), border_radius=5)
@@ -71,13 +85,6 @@ try:
                     (int((45 + (j * 96)) // ZR), int((83 + (i * 68)) // ZR), int(84 // ZR), int(61 // ZR)))
                 if mouse and card.collidepoint(pos):
                     return_txt = 'CARD' + str(i) + str(j)
-                if winCards:
-                    for card in winCards:
-                        if int(card[0]) == i and j == int(card[1]):
-                            pygame.draw.rect(win, (255, 255, 0), (
-                                int(((43 + (j * 96)) - j // 5) // ZR), int(((81 + (i * 68)) - i // 2) // ZR), int(88 // ZR),
-                                int(65 // ZR)), border_radius=5)
-                            break
         win.blit(BoardCards, (int(37 // ZR), int(72 // ZR)))
         for i in range(10):
             for j in range(10):
@@ -125,7 +132,10 @@ try:
                     reply = 'ping'
                     return card_select
             elif (card_select[0] == 'H') or (card_select[0] == 'S'):
-                if (card_clicked[2:] == 'US') or (card_clicked[2:] == 'AI'):
+                tester_board = board
+                tester_board[int(recent_click[4])][int(recent_click[5])] = tester_board[int(recent_click[4])][int(recent_click[5])][:2]
+                is_five(tester_board)
+                if (len(card_clicked) == 4) and (sequence_no == detail):
                     reply = str(int(recent_click[4])) + str(int(recent_click[5]))
                 else:
                     reply = 'ping'
@@ -159,102 +169,104 @@ try:
 
 
     def is_five(gameBoard):
-        global winCards, winner
-        state = ''
-        # ONES CHECK
-        counter = 0
-        for i in range(len(gameBoard)):
-            for j in range(len(gameBoard[i])):
-                if gameBoard[i][j][-2:] == 'US' or gameBoard[i][j][-2:] == 'xx':
-                    counter += 1
-                    if counter == 5:
-                        winner = 'US'
-                        state = '01' + str(i) + str(j - 4)
-                else:
-                    counter = 0
-        for i in range(len(gameBoard)):
-            for j in range(len(gameBoard[i])):
-                if gameBoard[i][j][-2:] == 'AI' or gameBoard[i][j][-2:] == 'xx':
-                    counter += 1
-                    if counter == 5:
-                        winner = 'AI'
-                        state = '01' + str(i) + str(j - 4)
-                else:
-                    counter = 0
-        # TENS CHECK v2
-        ten_board = transpose(gameBoard)
-        counter = 0
-        for i in range(len(ten_board)):
-            for j in range(len(ten_board[i])):
-                if ten_board[i][j][-2:] == 'US' or ten_board[i][j][-2:] == 'xx':
-                    counter += 1
-                    if counter == 5:
-                        winner = 'US'
-                        state = '10' + str(j - 4) + str(i)
-                else:
-                    counter = 0
-        for i in range(len(ten_board)):
-            for j in range(len(ten_board[i])):
-                if ten_board[i][j][-2:] == 'AI' or ten_board[i][j][-2:] == 'xx':
-                    counter += 1
-                    if counter == 5:
-                        winner = 'AI'
-                        state = '10' + str(j - 4) + str(i)
-                else:
-                    counter = 0
-        # FORWARD DIAGONALS CHECK
-        ten_board = transpose(shift(reversed(gameBoard)))
-        counter = 0
-        for i in range(len(ten_board)):
-            for j in range(len(ten_board[i])):
-                if ten_board[i][j][-2:] == 'US' or ten_board[i][j][-2:] == 'xx':
-                    counter += 1
-                    if counter == 5:
-                        winner = 'US'
-                        state = '11' + str(9 - j) + str(i - j)
-                else:
-                    counter = 0
-        for i in range(len(ten_board)):
-            for j in range(len(ten_board[i])):
-                if ten_board[i][j][-2:] == 'AI' or ten_board[i][j][-2:] == 'xx':
-                    counter += 1
-                    if counter == 5:
-                        winner = 'AI'
-                        state = '11' + str(9 - j) + str(i - j)
-                else:
-                    counter = 0
-        # BACKWARDS DIAGONAL CHECK
-        ten_board = transpose(shift(gameBoard))
-        counter = 0
-        for i in range(len(ten_board)):
-            for j in range(len(ten_board[i])):
-                if ten_board[i][j][-2:] == 'US' or ten_board[i][j][-2:] == 'xx':
-                    counter += 1
-                    if counter == 5:
-                        winner = 'US'
-                        state = '09' + str(j - 4) + str(i - j + 4)
-                else:
-                    counter = 0
-        for i in range(len(ten_board)):
-            for j in range(len(ten_board[i])):
-                if ten_board[i][j][-2:] == 'AI' or ten_board[i][j][-2:] == 'xx':
-                    counter += 1
-                    if counter == 5:
-                        winner = 'AI'
-                        state = '9' + str(j - 4) + str(i)
-                else:
-                    counter = 0
-        if winner:
-            winCards.append(str(state[2:]))
-            print(state)
-            winCards.append(str(int(state[2:]) + int(state[:2])))
-            winCards.append(str(int(state[2:]) + (2 * int(state[:2]))))
-            winCards.append(str(int(state[2:]) + (3 * int(state[:2]))))
-            winCards.append(str(int(state[2:]) + (4 * int(state[:2]))))
+        global winCards, winner, highlighter, sequence_no
+        sequence_no = {'US': 0, 'AI': 0}
+        winCards = []
+        names = ['US', 'AI']
+        # USER CHECK
+        for name in names:
+            state = []
+            # Ones
+            counter = 0
+            for i in range(len(gameBoard)):
+                for j in range(len(gameBoard[i])):
+                    if gameBoard[i][j][-2:] == name or gameBoard[i][j][-2:] == 'xx':
+                        counter += 1
+                        if counter >= 5:
+                            state.append('01' + str(i) + str(j - 4))
+                            sequence_no[name] += 1
+                    else:
+                        counter = 0
+                counter = 0
+            # Tens
+            ten_board = transpose(gameBoard)
+            counter = 0
+            for i in range(len(ten_board)):
+                for j in range(len(ten_board[i])):
+                    if ten_board[i][j][-2:] == name or ten_board[i][j][-2:] == 'xx':
+                        counter += 1
+                        if counter >= 5:
+                            state.append('10' + str(j - 4) + str(i))
+                            sequence_no[name] += 1
+                    else:
+                        counter = 0
+                counter = 0
+            # Elevens
+            ten_board = transpose(shift(reversed(gameBoard)))
+            counter = 0
+            for i in range(len(ten_board)):
+                for j in range(len(ten_board[i])):
+                    if ten_board[i][j][-2:] == name or ten_board[i][j][-2:] == 'xx':
+                        counter += 1
+                        if counter >= 5:
+                            state.append('11' + str(9 - j) + str(i - j))
+                            sequence_no[name] += 1
+                    else:
+                        counter = 0
+                counter = 0
+            # Nines
+            ten_board = transpose(shift(gameBoard))
+            counter = 0
+            for i in range(len(ten_board)):
+                for j in range(len(ten_board[i])):
+                    if ten_board[i][j][-2:] == name or ten_board[i][j][-2:] == 'xx':
+                        counter += 1
+                        if counter >= 5:
+                            state.append('09' + str(j - 4) + str(i - j + 4))
+                            sequence_no[name] += 1
+                    else:
+                        counter = 0
+                counter = 0
+            # WinCheck
+            current_check = []
+            for i in range(len(state)):
+                win_add = []
+                for j in range(5):
+                    win_add.append(str(int(state[i][2:]) + (j * int(state[i][:2]))))
+                current_check.append(win_add)
+            highlighter = []
+            for i in range(len(current_check)):
+                for j in range(len(current_check) - i - 1):
+                    same_count = 0
+                    for k in current_check[i]:
+                        if k in current_check[len(current_check) - j - 1]:
+                            same_count += 1
+                            if same_count > 1:
+                                break
+                    if same_count <= 1:
+                        winner = name
+                        for card in current_check[i]:
+                            highlighter.append(card)
+                        for card in current_check[len(current_check) - j - 1]:
+                            highlighter.append(card)
+                        break
+                if highlighter:
+                    break
+            for el in current_check:
+                for indexer in el:
+                    winCards.append(indexer)
+            if highlighter:
+                break
+            if sequence_no[name] > 1:
+                sequence_no[name] = 1
+        if winCards:
             for i in range(len(winCards)):
                 if len(winCards[i]) == 1:
                     winCards[i] = '0' + winCards[i]
-            return str(winner + state)
+            for i in range(len(highlighter)):
+                if len(highlighter[i]) == 1:
+                    highlighter[i] = '0' + highlighter[i]
+            return str(winner)
         else:
             return ''
 
@@ -300,7 +312,7 @@ try:
                 elif j < 6:
                     win.blit(cardIMGs[str(cards[j + 1])], (int((200 + (j * 100)) // ZR), int(770 // ZR)))
                 else:
-                    win.blit(cardIMGs[str(cards[7])], (int((200 + (j * 100)) // ZR), int(900 - (i * 8.667) // ZR)))
+                    win.blit(cardIMGs[str(cards[7])], (int((200 + (j * 100)) // ZR), int((900 - (i * 8.667)) // ZR)))
             clock.tick(30)
             pygame.display.flip()
             data0 = n.send('ping')
@@ -361,6 +373,7 @@ try:
             if not turn:
                 reply = 'ping'
             else:
+                detail = sequence_no
                 card_select = main(clicked, cards[:7])
                 if played:
                     turn_change.play()
