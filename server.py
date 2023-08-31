@@ -51,10 +51,10 @@ print("Waiting for connection.")
 
 def deal():
     global p1Cards, p2Cards, cards
-    while len(p1Cards) < 7:
+    while len(p1Cards) < 8:
         p1Cards.append(cards[0])
         del cards[0]
-    while len(p2Cards) < 7:
+    while len(p2Cards) < 8:
         p2Cards.append(cards[0])
         del cards[0]
 
@@ -70,7 +70,7 @@ def create_msg(boardMsg, crds, top_text, my_turn):
     if crds[0] == 'NO':
         final += 'NO NO'
     else:
-        for i in range(7):
+        for i in range(8):
             final += crds[i] + ' '
     final += 'abc!'
     final += top_text
