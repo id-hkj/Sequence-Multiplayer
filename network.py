@@ -14,11 +14,8 @@ class Network:
         return self.p
 
     def connect(self):
-        try:
-            self.client.connect(self.addr)
-            return pickle.loads(self.client.recv(2048))
-        except:
-            print('ERRRORRRR!')
+        self.client.connect(self.addr)
+        return pickle.loads(self.client.recv(2048))
 
     def send(self, data):
         try:
