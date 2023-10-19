@@ -211,7 +211,7 @@ class Nav:
         self.Text = pygame.font.Font(None, 40)
         self.mouse_pos = pygame.mouse.get_pos()
         self.Team_Count = 2
-        self.Player_Count = 2
+        self.Player_Count = 1
         self.PPT_lst = ["1", "2", "3", "4", "5", "6"]
 
         # BUTTONS/DROPDOWNS
@@ -355,6 +355,7 @@ class Nav:
             self.player_no.option_list = self.PPT_lst[:6 - 2 * selected_t]
             if self.Player_Count > 4:
                 self.player_no.selected = 0
+                self.Player_Count = 1
         if selected_p != -1:
             self.Player_Count = selected_p + 1
         self.win.blit(self.Font.render('CREATE A GAME', True, (255, 255, 255)), self.zoom(70, 15))
@@ -363,13 +364,13 @@ class Nav:
             self.win.blit(self.Text.render('No name entered', True, (236, 62, 19)), self.zoom(520, 153))
         self.back.render()
         self.create_go.render()
-        self.team_no.draw(self.win)
         self.player_no.draw(self.win)
+        self.team_no.draw(self.win)
         self.win.blit(self.Text.render('TEAMS', True, (255, 255, 255)), self.zoom(80, 205))
         self.win.blit(self.Text.render('PLAYERS PER TEAM', True, (255, 255, 255)), self.zoom(80, 245))
         if self.create_go.is_clicked(self.c, self.mouse_pos):
             if self.name_enter.text:
-                start_new_thread(server_start, ())
+                start_new_thread(server_start, (self.Team_Count * self.Player_Count, self.Team_Count))
                 time.sleep(0.5)
                 while True:
                     self.game.connect(socket.gethostbyname(socket.gethostname()), self.name_enter.text)
