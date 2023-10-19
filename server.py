@@ -4,8 +4,8 @@ from random import randint
 import pickle
 
 
-def server_start():
-    global board, cards, turn, curr_player, server, s, names, player_cards, board_marker
+def server_start(players, teams):
+    global board, cards, turn, curr_player, server, s, names, player_cards, board_marker, player_no, team_no, card_deals
     board = [['xx', 'S1', 'SQ', 'SK', 'SA', 'D2', 'D3', 'D4', 'D5', 'xx'],
              ['S9', 'H1', 'H9', 'H8', 'H7', 'H6', 'H5', 'H4', 'H3', 'D6'],
              ['S8', 'HQ', 'D7', 'D8', 'D9', 'D1', 'DQ', 'DK', 'H2', 'D7'],
@@ -24,8 +24,12 @@ def server_start():
              'DA', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D1', 'DJ', 'DQ', 'DK',
              'CA', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9', 'C1', 'CJ', 'CQ', 'CK',
              'SA', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S1', 'SJ', 'SQ', 'SK']
-    player_cards = {0: [], 1: []}
+    card_deals = {2: {2: 7, 4: 6, 6: 5, 8: 4, 10: 3, 12: 3},
+                  3: {3: 6, 6: 5, 9: 4, 12: 3}}
     board_marker = {0: 'US', 1: 'AI', 2: 'GR'}
+    player_no = players
+    team_no = teams
+    player_cards = {i: [] for i in range(player_no)}
     names = {}
     turn = 0
     new_deck = []
@@ -62,9 +66,9 @@ def server_start():
 
 
 def deal():
-    global cards, player_cards
-    for el in player_cards:
-        while len(player_cards[el]) < 7:
+    global cards, player_cards, player_no, card_deals, team_no
+    for el in range(player_no):
+        while len(player_cards[el]) < card_deals[team_no][player_no]:
             player_cards[el].append(cards[0])
             del cards[0]
 
@@ -72,38 +76,38 @@ def deal():
 def create_msg(boardMsg, crds, top_text, my_turn):
     final = ''
     for i in range(10):
-        for j in range(10):
-            final += str(boardMsg[i][j]) + ' '
+        final += ' '.join(boardMsg[i])
+        final += ' '
     final += 'abc!'
     final += my_turn
     final += 'abc!'
     if crds[0] == 'NO':
         final += 'NO NO'
     else:
-        for i in range(7):
-            final += crds[i] + ' '
+        final += ' '.join(crds)
     final += 'abc!'
     final += top_text
     return final
 
 
 def threaded_client(conn, player):
-    global turn, board, names, player_cards, board_marker
-    sender = create_msg(board, ['NO', 'NO'], ('Waiting for 1 Player(s). Join at ' + str(server)), '')
+    global turn, board, names, player_cards, board_marker, player_no, team_no, curr_plyer
+    sender = create_msg(board, ['NO', 'NO'], ('Waiting for ' + str(player_no - curr_player) + ' Player(s). Join at '
+                                              + str(server)), str(2))
     conn.sendall(pickle.dumps(sender))
     pickle.loads(conn.recv(2048))
-    while len(names) < 2:
+    while len(names) < player_no:
+        sender = create_msg(board, ['NO', 'NO'], ('Waiting for ' + str(player_no - curr_player) + ' Player(s). Join at '
+                                                  + str(server)), str(2))
         conn.sendall(pickle.dumps(sender))
         reply = pickle.loads(conn.recv(2048))
         names[player] = reply
         if not reply:
             print("Disconnected")
             break
-    sender = ''
-    for el in names.values():
-        sender += el
-        sender += 'aaBaa'
-    sender = sender[:-5]
+    sender = 'aaBaa'.join(names.values())
+    sender += 'aaBaa'
+    sender += str(team_no)
     for _ in range(3):
         conn.sendall(pickle.dumps(sender))
         pickle.loads(conn.recv(2048))
@@ -111,17 +115,18 @@ def threaded_client(conn, player):
     while True:
         try:
             reply = pickle.loads(conn.recv(2048))
-
-            if player >= 2:
-                sender = create_msg(board, ['NO', 'NO'], str(names[turn].upper() + '\'S TURN'), '')
+            turn_send = (turn - player) % player_no
+            if player >= player_no:
+                sender = create_msg(board, ['NO', 'NO'], str(names[turn].upper() + '\'S TURN'), str(2))
             elif reply == 'ping':
-                sender = create_msg(board, player_cards[player], 'YOUR TURN', '1' if player == turn else '')
+                sender = create_msg(board, player_cards[player], str(names[turn].upper() + '\'S TURN'),
+                                    str(turn_send))
             else:
-                turn = (turn + 1) % 2
+                turn = (turn + 1) % player_no
                 del player_cards[player][player_cards[player].index(reply[2:])]
                 deal()
                 if len(board[int(reply[0])][int(reply[1])]) == 2:
-                    board[int(reply[0])][int(reply[1])] += board_marker[(player % 2)]
+                    board[int(reply[0])][int(reply[1])] += board_marker[(player % team_no)]
                 else:
                     board[int(reply[0])][int(reply[1])] = board[int(reply[0])][int(reply[1])][:2]
                 for all_cards in player_cards[player]:
@@ -138,7 +143,7 @@ def threaded_client(conn, player):
                             del player_cards[player][player_cards[player].index(all_cards)]
                             deal()
                             break
-                sender = create_msg(board, player_cards[player], str(names[turn].upper() + '\'S TURN'), '')
+                sender = create_msg(board, player_cards[player], str(names[turn].upper() + '\'S TURN'), str(1))
 
             # COMMUNICATION
             if not reply:
@@ -149,7 +154,8 @@ def threaded_client(conn, player):
                     print("Player No.", player, "Received:", reply)
                     print("Player No.", player, "Sending:", sender)
             conn.sendall(pickle.dumps(sender))
-        except:
+        except Exception as e:
+            print(e)
             break
     print('Lost connection.')
     conn.close()
