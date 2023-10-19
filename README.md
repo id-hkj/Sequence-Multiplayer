@@ -12,7 +12,7 @@ To run it from the python files, you will need to download the following files:
 - server.py
 - Red.png
 - Blue.png
-- (Green.png) - not yet necessary, but will be after Issue #5 is added
+- Green.png
 - Sequence!!!.png
 - The 'Cards' folder (with all the images in it)
 
