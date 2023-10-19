@@ -28,6 +28,10 @@ class InputBox:
             # If the user clicked on the input_box rect.
             if self.rect.collidepoint(event.pos):
                 self.active = True
+                self.char_on = event.pos[0] - self.x - 3
+                self.char_on = int(self.char_on / 14) + 1 if self.char_on % 14 > 7 else int(self.char_on / 14)
+                if self.char_on > len(self.text):
+                    self.char_on = len(self.text)
                 self.color = pygame.Color('dodgerblue2')
                 self.txt_surface = self.font.render(self.text, True, self.color)
             else:
@@ -51,7 +55,7 @@ class InputBox:
             elif event.key == pygame.K_END:
                 self.char_on = len(self.text)
             elif event.unicode:
-                if (ord(event.unicode) >= 32) and (len(self.text) < 20):
+                if (32 <= ord(event.unicode) <= 127) and (len(self.text) < 20):
                     self.text = list(self.text)
                     self.text.insert(self.char_on, event.unicode)
                     self.text = ''.join(self.text)
@@ -65,6 +69,10 @@ class InputBox:
             if self.rect.collidepoint(event.pos):
                 # Toggle the active variable.
                 self.active = True
+                self.char_on = event.pos[0] - self.x - 3
+                self.char_on = int(self.char_on / 14) + 1 if self.char_on % 14 > 7 else int(self.char_on / 14)
+                if self.char_on > len(self.text):
+                    self.char_on = len(self.text)
                 self.color = pygame.Color('dodgerblue2')
                 self.txt_surface = self.font.render(self.text, True, self.color)
             else:
@@ -303,6 +311,10 @@ class Nav:
         for event in self.events:
             self.ip_enter.handle_event_ip(event)
             self.name_enter.handle_event(event)
+        if self.ip_enter.rect.collidepoint(self.mouse_pos) or self.name_enter.rect.collidepoint(self.mouse_pos):
+            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_IBEAM)
+        else:
+            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
         self.ip_enter.draw(self.win)
         self.name_enter.draw(self.win)
         self.win.blit(self.Font.render('JOIN A GAME', True, (255, 255, 255)), self.zoom(175, 15))
@@ -331,6 +343,10 @@ class Nav:
     def create(self):
         for event in self.events:
             self.name_enter.handle_event(event)
+        if self.name_enter.rect.collidepoint(self.mouse_pos):
+            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_IBEAM)
+        else:
+            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
         self.name_enter.draw(self.win)
         selected_t = int(self.team_no.update(self.events))
         selected_p = int(self.player_no.update(self.events))
