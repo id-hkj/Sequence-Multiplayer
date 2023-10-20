@@ -8,6 +8,7 @@ from _thread import *
 pygame.init()
 pygame.display.init()
 pygame.font.init()
+pygame.display.set_caption("Sequence Game")
 
 
 class InputBox:
@@ -213,36 +214,41 @@ class Nav:
             self.scene = 't'
 
     def tutorial(self):
+        self.win.blit(self.Font.render('GAME RULES', True, (255, 255, 255)), self.zoom(175, 15))
         # AIM section
-        pygame.draw.rect(self.win, (0, 0, 0), self.zoom(15, 40, 420, 190))
-        self.win.blit(self.Heading.render('AIM:', True, (255, 255, 255)), self.zoom(166, 50))
-        self.win.blit(self.Text.render('Get a sequence of 5 in a row.', True, (255, 255, 255)), self.zoom(22, 90))
-        self.win.blit(self.Text.render('2 TEAMS: 2 sequences to win', True, (255, 255, 255)), self.zoom(22, 135))
-        self.win.blit(self.Text.render('3 TEAMS: 1 sequence to win.', True, (255, 255, 255)), self.zoom(22, 180))
+        pygame.draw.rect(self.win, (251, 180, 41), self.zoom(14, 129, 422, 192))
+        pygame.draw.rect(self.win, (15, 50, 15), self.zoom(15, 130, 420, 190))
+        self.win.blit(self.Heading.render('AIM:', True, (255, 255, 255)), self.zoom(166, 140))
+        self.win.blit(self.Text.render('Get a sequence of 5 in a row.', True, (255, 255, 255)), self.zoom(22, 180))
+        self.win.blit(self.Text.render('2 TEAMS: 2 sequences to win', True, (255, 255, 255)), self.zoom(22, 225))
+        self.win.blit(self.Text.render('3 TEAMS: 1 sequence to win.', True, (255, 255, 255)), self.zoom(22, 270))
         # On Your Turn
-        pygame.draw.rect(self.win, (0, 0, 0), self.zoom(445, 40, 570, 190))
-        self.win.blit(self.Heading.render('ON YOUR TURN:', True, (255, 255, 255)), self.zoom(584, 50))
+        pygame.draw.rect(self.win, (251, 180, 41), self.zoom(444, 129, 572, 192))
+        pygame.draw.rect(self.win, (15, 50, 15), self.zoom(445, 130, 570, 190))
+        self.win.blit(self.Heading.render('ON YOUR TURN:', True, (255, 255, 255)), self.zoom(584, 140))
         self.win.blit(self.Text.render('1. Select a card to play (You can change', True, (255, 255, 255)),
-                      self.zoom(452, 90))
+                      self.zoom(452, 180))
         self.win.blit(self.Text.render('your selection by clicking another card)', True, (255, 255, 255)),
-                      self.zoom(460, 125))
+                      self.zoom(460, 215))
         self.win.blit(self.Text.render('2. Click a square on the gameboard', True, (255, 255, 255)),
-                      self.zoom(452, 170))
+                      self.zoom(452, 260))
         # JACKS
-        pygame.draw.rect(self.win, (0, 0, 0), self.zoom(15, 240, 480, 190))
-        self.win.blit(self.Heading.render('JACKS:', True, (255, 255, 255)), self.zoom(154, 250))
-        self.win.blit(self.Text.render('2-EYED JACKS: Wild', True, (255, 255, 255)), self.zoom(22, 290))
-        self.win.blit(self.Text.render('1-EYED JACKS: Remove counter', True, (255, 255, 255)), self.zoom(22, 335))
+        pygame.draw.rect(self.win, (251, 180, 41), self.zoom(14, 329, 482, 192))
+        pygame.draw.rect(self.win, (15, 50, 15), self.zoom(15, 330, 480, 190))
+        self.win.blit(self.Heading.render('JACKS:', True, (255, 255, 255)), self.zoom(154, 340))
+        self.win.blit(self.Text.render('2-EYED JACKS: Wild', True, (255, 255, 255)), self.zoom(22, 380))
+        self.win.blit(self.Text.render('1-EYED JACKS: Remove counter', True, (255, 255, 255)), self.zoom(22, 425))
         self.win.blit(self.Text.render('UNLESS counter part of sequence', True, (255, 255, 255)),
-                      self.zoom(30, 380))
+                      self.zoom(30, 470))
         # THE GAMEBOARD
-        pygame.draw.rect(self.win, (0, 0, 0), self.zoom(510, 240, 505, 190))
-        self.win.blit(self.Heading.render('THE GAMEBOARD:', True, (255, 255, 255)), self.zoom(609, 250))
+        pygame.draw.rect(self.win, (251, 180, 41), self.zoom(509, 329, 507, 192))
+        pygame.draw.rect(self.win, (15, 50, 15), self.zoom(510, 330, 505, 190))
+        self.win.blit(self.Heading.render('THE GAMEBOARD:', True, (255, 255, 255)), self.zoom(609, 340))
         self.win.blit(self.Text.render('Each Card (except the jacks) are', True, (255, 255, 255)),
-                      self.zoom(517, 290))
-        self.win.blit(self.Text.render('pictured twice.', True, (255, 255, 255)), self.zoom(517, 335))
-        self.win.blit(self.Text.render('The four corners are freebies.', True, (255, 255, 255)),
                       self.zoom(517, 380))
+        self.win.blit(self.Text.render('pictured twice.', True, (255, 255, 255)), self.zoom(517, 425))
+        self.win.blit(self.Text.render('The four corners are freebies.', True, (255, 255, 255)),
+                      self.zoom(517, 470))
         # Buttons
         self.back.render()
         if self.back.is_clicked(self.c, self.mouse_pos):
