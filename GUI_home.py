@@ -12,7 +12,7 @@ pygame.font.init()
 
 class InputBox:
 
-    def __init__(self, x, y, w, h, text=''):
+    def __init__(self, x, y, w, h, max_chr, text, min_asc, max_asc):
         self.rect = pygame.Rect(x, y, w, h)
         self.color = pygame.Color('lightskyblue3')
         self.text = ''
@@ -22,10 +22,12 @@ class InputBox:
         self.char_on = 0
         self.x = x
         self.cursor = pygame.Rect((x, y + 5), (2, h - 10))
+        self.max = max_chr
+        self.min_asc = min_asc
+        self.max_asc = max_asc
 
     def handle_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
-            # If the user clicked on the input_box rect.
             if self.rect.collidepoint(event.pos):
                 self.active = True
                 self.char_on = event.pos[0] - self.x - 3
@@ -46,7 +48,7 @@ class InputBox:
                 if self.char_on != 0:
                     self.char_on -= 1
             elif event.key == pygame.K_RIGHT:
-                if self.char_on != 20:
+                if self.char_on != self.max:
                     self.char_on += 1
             elif event.key == pygame.K_DELETE:
                 self.text = self.text[:self.char_on] + self.text[self.char_on + 1:]
@@ -55,55 +57,13 @@ class InputBox:
             elif event.key == pygame.K_END:
                 self.char_on = len(self.text)
             elif event.unicode:
-                if (32 <= ord(event.unicode) <= 127) and (len(self.text) < 20):
+                if (self.min_asc <= ord(event.unicode) <= self.max_asc) and (len(self.text) < self.max):
                     self.text = list(self.text)
                     self.text.insert(self.char_on, event.unicode)
                     self.text = ''.join(self.text)
                     self.char_on += 1
             # Re-render the text.
             self.txt_surface = self.font.render(self.text, True, self.color)
-
-    def handle_event_ip(self, event):
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            # If the user clicked on the input_box rect.
-            if self.rect.collidepoint(event.pos):
-                # Toggle the active variable.
-                self.active = True
-                self.char_on = event.pos[0] - self.x - 3
-                self.char_on = int(self.char_on / 14) + 1 if self.char_on % 14 > 7 else int(self.char_on / 14)
-                if self.char_on > len(self.text):
-                    self.char_on = len(self.text)
-                self.color = pygame.Color('dodgerblue2')
-                self.txt_surface = self.font.render(self.text, True, self.color)
-            else:
-                self.active = False
-                self.color = pygame.Color('lightskyblue3')
-        if event.type == pygame.KEYDOWN:
-            if self.active:
-                if event.key == pygame.K_BACKSPACE:
-                    self.text = self.text[:self.char_on - 1] + self.text[self.char_on:]
-                    if self.char_on != 0:
-                        self.char_on -= 1
-                elif event.key == pygame.K_LEFT:
-                    if self.char_on != 0:
-                        self.char_on -= 1
-                elif event.key == pygame.K_RIGHT:
-                    if self.char_on != 15:
-                        self.char_on += 1
-                elif event.key == pygame.K_DELETE:
-                    self.text = self.text[:self.char_on] + self.text[self.char_on + 1:]
-                elif event.key == pygame.K_HOME:
-                    self.char_on = 0
-                elif event.key == pygame.K_END:
-                    self.char_on = len(self.text)
-                elif event.unicode:
-                    if ((48 <= ord(event.unicode) <= 57) or (event.unicode == '.')) and len(self.text) < 15:
-                        self.text = list(self.text)
-                        self.text.insert(self.char_on, event.unicode)
-                        self.text = ''.join(self.text)
-                        self.char_on += 1
-                # Re-render the text.
-                self.txt_surface = self.font.render(self.text, True, self.color)
 
     def draw(self, screen):
         screen.blit(self.txt_surface, home.zoom(self.rect.x + 5, self.rect.y + 4))
@@ -173,6 +133,7 @@ class Button:
 
     def __init__(self, dimensions, text, win, font):
         self.rect_dimensions = dimensions
+        self.border_dimensions = (dimensions[0] - 2, dimensions[1] - 2, dimensions[2] + 4, dimensions[3] + 4)
         self.text = text
         self.font = font
         self.text_img = self.font.render(self.text, True, (255, 255, 255))
@@ -183,7 +144,8 @@ class Button:
         self.rect = pygame.Rect(dimensions[:2], dimensions[2:])
 
     def render(self):
-        pygame.draw.rect(self.win, (0, 0, 0), self.rect_dimensions)
+        pygame.draw.rect(self.win, (0, 0, 0), self.border_dimensions)
+        pygame.draw.rect(self.win, (0, 30, 0), self.rect_dimensions)
         self.win.blit(self.text_img, self.text_pos)
 
     def is_clicked(self, c, mouse_pos):
@@ -221,13 +183,13 @@ class Nav:
         self.create_b = Button(self.zoom(224, 310, 578, 125), 'CREATE', self.win, self.Font)
         self.join_b = Button(self.zoom(224, 450, 578, 125), 'JOIN', self.win, self.Font)
         self.join_go = Button(self.zoom(800, 150, 115, 75), 'GO', self.win, self.Heading)
-        self.create_go = Button(self.zoom(224, 550, 578, 125), 'CREATE', self.win, self.Heading)
+        self.create_go = Button(self.zoom(775, 200, 200, 75), 'CREATE', self.win, self.Heading)
         self.team_no = OptionBox((50, 200, 25, 32), (150, 150, 150), (100, 200, 255), self.Text, ["2", "3"])
         self.player_no = OptionBox((50, 240, 25, 32), (150, 150, 150), (100, 200, 255), self.Text, self.PPT_lst)
 
         # JOIN/CREATE
-        self.name_enter = InputBox(210, 150, 290, 30, 'Name')
-        self.ip_enter = InputBox(210, 200, 220, 30, 'IP Address')
+        self.name_enter = InputBox(210, 150, 290, 30, 15, 'Name', 33, 126)
+        self.ip_enter = InputBox(210, 200, 220, 30, 20, 'IP Address', 46, 57)
         self.ip_error = False
         self.name_error = False
 
@@ -309,7 +271,7 @@ class Nav:
 
     def join(self):
         for event in self.events:
-            self.ip_enter.handle_event_ip(event)
+            self.ip_enter.handle_event(event)
             self.name_enter.handle_event(event)
         if self.ip_enter.rect.collidepoint(self.mouse_pos) or self.name_enter.rect.collidepoint(self.mouse_pos):
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_IBEAM)
@@ -329,14 +291,15 @@ class Nav:
         if self.join_go.is_clicked(self.c, self.mouse_pos):
             pygame.draw.rect(self.win, (9, 66, 19), (515, 150, 250, 80))
             pygame.display.flip()
-            if self.name_enter.text and self.ip_enter.text:
+            if self.name_enter.text and self.ip_enter.text and self.name_enter.text != 'YOU':
                 self.game.connect(self.ip_enter.text, self.name_enter.text)
                 if self.game.scene == 'g':
                     self.scene = 'g'
                 else:
                     self.ip_error = True
             else:
-                self.name_error, self.ip_error = not self.name_enter.text, not self.ip_enter.text
+                self.ip_error = not self.ip_enter.text
+                self.name_error = True if self.name_enter.text == 'YOU' else not self.name_enter.text
         elif self.back.is_clicked(self.c, self.mouse_pos):
             self.scene = 'p'
 
@@ -348,8 +311,8 @@ class Nav:
         else:
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
         self.name_enter.draw(self.win)
+        selected_p = int(self.player_no.update(self.events)) if not self.team_no.draw_menu else -1
         selected_t = int(self.team_no.update(self.events))
-        selected_p = int(self.player_no.update(self.events))
         if selected_t != -1:
             self.Team_Count = selected_t + 2
             self.player_no.option_list = self.PPT_lst[:6 - 2 * selected_t]
@@ -369,7 +332,7 @@ class Nav:
         self.win.blit(self.Text.render('TEAMS', True, (255, 255, 255)), self.zoom(80, 205))
         self.win.blit(self.Text.render('PLAYERS PER TEAM', True, (255, 255, 255)), self.zoom(80, 245))
         if self.create_go.is_clicked(self.c, self.mouse_pos):
-            if self.name_enter.text:
+            if self.name_enter.text and self.name_enter.text != 'YOU':
                 start_new_thread(server_start, (self.Team_Count * self.Player_Count, self.Team_Count))
                 time.sleep(0.5)
                 while True:
