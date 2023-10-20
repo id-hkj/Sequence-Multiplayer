@@ -300,7 +300,7 @@ class GameScreen:
                 self.player_names['b'] = ', '.join(data0[:-1][0::2])
                 self.player_names['r'] = ', '.join(data0[:-1][1::2])
             for key in self.player_names:
-                if self.name in self.player_names[key]:
+                if self.name in self.player_names[key].split(', '):
                     split = self.player_names[key].split(self.name)
                     self.player_names[key] = 'YOU'.join(split)
                     self.name = self.name.upper() + '\'S TURN'
