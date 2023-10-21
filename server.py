@@ -91,71 +91,81 @@ def create_msg(boardMsg, crds, top_text, my_turn):
 
 
 def threaded_client(conn, player):
-    global turn, board, names, player_cards, board_marker, player_no, team_no, curr_plyer
-    sender = create_msg(board, ['NO', 'NO'], ('Waiting for ' + str(player_no - curr_player) + ' Player(s). Join at '
-                                              + str(server)), str(2))
-    conn.sendall(pickle.dumps(sender))
-    pickle.loads(conn.recv(2048))
-    while len(names) < player_no:
+    try:
+        global turn, board, names, player_cards, board_marker, player_no, team_no, curr_player
         sender = create_msg(board, ['NO', 'NO'], ('Waiting for ' + str(player_no - curr_player) + ' Player(s). Join at '
                                                   + str(server)), str(2))
         conn.sendall(pickle.dumps(sender))
         reply = pickle.loads(conn.recv(2048))
-        names[player] = reply
-        if not reply:
-            print("Disconnected")
-            break
-    sender = 'aaBaa'.join(names.values())
-    sender += 'aaBaa'
-    sender += str(team_no)
-    for _ in range(3):
-        conn.sendall(pickle.dumps(sender))
-        pickle.loads(conn.recv(2048))
-    conn.sendall(pickle.dumps(sender))
-    while True:
-        try:
+        if reply in names.values():
+            sender = "NO NO NO"
+            curr_player -= 1
+            conn.sendall(pickle.dumps(sender))
+            pickle.loads(conn.recv(2048))
+            conn.sendall(pickle.dumps(sender))
+            pickle.loads(conn.recv(2048))
+        while len(names) < player_no:
+            sender = create_msg(board, ['NO', 'NO'], ('Waiting for ' + str(player_no - curr_player) +
+                                                      ' Player(s). Join at ' + str(server)), str(2))
+            conn.sendall(pickle.dumps(sender))
             reply = pickle.loads(conn.recv(2048))
-            turn_send = (turn - player) % player_no
-            if player >= player_no:
-                sender = create_msg(board, ['NO', 'NO'], str(names[turn].upper() + '\'S TURN'), str(2))
-            elif reply == 'ping':
-                sender = create_msg(board, player_cards[player], str(names[turn].upper() + '\'S TURN'),
-                                    str(turn_send))
-            else:
-                turn = (turn + 1) % player_no
-                del player_cards[player][player_cards[player].index(reply[2:])]
-                deal()
-                if len(board[int(reply[0])][int(reply[1])]) == 2:
-                    board[int(reply[0])][int(reply[1])] += board_marker[(player % team_no)]
-                else:
-                    board[int(reply[0])][int(reply[1])] = board[int(reply[0])][int(reply[1])][:2]
-                for all_cards in player_cards[player]:
-                    if all_cards[1] == 'J':
-                        continue
-                    else:
-                        ded = True
-                        for CardRow in board:
-                            if all_cards in CardRow:
-                                ded = False
-                                break
-                        if ded:
-                            print('DEADDDDDD CARD')
-                            del player_cards[player][player_cards[player].index(all_cards)]
-                            deal()
-                            break
-                sender = create_msg(board, player_cards[player], str(names[turn].upper() + '\'S TURN'), str(1))
-
-            # COMMUNICATION
+            names[player] = reply
             if not reply:
                 print("Disconnected")
                 break
-            else:
-                if reply != 'ping':
-                    print("Player No.", player, "Received:", reply)
-                    print("Player No.", player, "Sending:", sender)
+        sender = 'aaBaa'.join(names.values())
+        sender += 'aaBaa'
+        sender += str(team_no)
+        for _ in range(3):
             conn.sendall(pickle.dumps(sender))
-        except Exception as e:
-            print(e)
-            break
-    print('Lost connection.')
-    conn.close()
+            pickle.loads(conn.recv(2048))
+        conn.sendall(pickle.dumps(sender))
+        while True:
+            try:
+                reply = pickle.loads(conn.recv(2048))
+                turn_send = (turn - player) % player_no
+                if player >= player_no:
+                    sender = create_msg(board, ['NO', 'NO'], str(names[turn].upper() + '\'S TURN'), str(2))
+                elif reply == 'ping':
+                    sender = create_msg(board, player_cards[player], str(names[turn].upper() + '\'S TURN'),
+                                        str(turn_send))
+                else:
+                    turn = (turn + 1) % player_no
+                    del player_cards[player][player_cards[player].index(reply[2:])]
+                    deal()
+                    if len(board[int(reply[0])][int(reply[1])]) == 2:
+                        board[int(reply[0])][int(reply[1])] += board_marker[(player % team_no)]
+                    else:
+                        board[int(reply[0])][int(reply[1])] = board[int(reply[0])][int(reply[1])][:2]
+                    for all_cards in player_cards[player]:
+                        if all_cards[1] == 'J':
+                            continue
+                        else:
+                            ded = True
+                            for CardRow in board:
+                                if all_cards in CardRow:
+                                    ded = False
+                                    break
+                            if ded:
+                                print('DEADDDDDD CARD')
+                                del player_cards[player][player_cards[player].index(all_cards)]
+                                deal()
+                                break
+                    sender = create_msg(board, player_cards[player], str(names[turn].upper() + '\'S TURN'), str(1))
+
+                # COMMUNICATION
+                if not reply:
+                    print("Disconnected")
+                    break
+                else:
+                    if reply != 'ping':
+                        print("Player No.", player, "Received:", reply)
+                        print("Player No.", player, "Sending:", sender)
+                conn.sendall(pickle.dumps(sender))
+            except Exception as e:
+                print(e)
+                break
+        print('Lost connection.')
+        conn.close()
+    except EOFError:
+        print('EOFError')
