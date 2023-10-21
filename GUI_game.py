@@ -76,10 +76,16 @@ class GameScreen:
         try:
             self.scene = 'load'
             self.n = Network(ip)
-            self.scene = 'g'
             self.data = self.n.get_dat()
             self.update_data()
             self.name = name
+            self.data = self.n.send(self.name)
+            self.data = self.n.send(self.name)
+            if self.data == "NO NO NO":
+                self.scene = "name"
+                del self.n
+            else:
+                self.scene = "g"
         except (socket.gaierror, TimeoutError):
             self.scene = 'invalidIP'
 
