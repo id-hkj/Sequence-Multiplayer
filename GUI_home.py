@@ -159,6 +159,7 @@ class Nav:
 
     def __init__(self):
         # SETUP
+        self.taken = False
         self.mon_width = pygame.display.Info().current_w
         self.zr = 1920 / self.mon_width
         self.win_width = int(1025 // self.zr)
@@ -288,6 +289,8 @@ class Nav:
         self.win.blit(self.Font.render('JOIN A GAME', True, (255, 255, 255)), self.zoom(175, 15))
         if self.name_error:
             self.win.blit(self.Text.render('No name entered', True, (236, 62, 19)), self.zoom(520, 153))
+        elif self.taken:
+            self.win.blit(self.Text.render('Name Taken', True, (236, 62, 19)), self.zoom(520, 153))
         if self.ip_error:
             self.win.blit(self.Text.render('Invalid IP address', True, (236, 62, 19)), self.zoom(520, 203))
         self.win.blit(self.Text.render('Your Name: ', True, (255, 255, 255)), self.zoom(50, 153))
@@ -301,6 +304,8 @@ class Nav:
                 self.game.connect(self.ip_enter.text, self.name_enter.text)
                 if self.game.scene == 'g':
                     self.scene = 'g'
+                elif self.game.scene == 'name':
+                    self.taken = True
                 else:
                     self.ip_error = True
             else:
@@ -343,7 +348,8 @@ class Nav:
                 time.sleep(0.5)
                 while True:
                     self.game.connect(socket.gethostbyname(socket.gethostname()), self.name_enter.text)
-                    time.sleep(0.5)
+                    while self.game.scene == "load":
+                        time.sleep(0.1)
                     if self.game.scene == 'g':
                         break
                 self.scene = 'g'
