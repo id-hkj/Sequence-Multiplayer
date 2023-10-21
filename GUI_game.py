@@ -190,11 +190,11 @@ class GameScreen:
                 if self.winCards:
                     if (str(i) + str(j) in self.highlighter) or (str(i) + str(j) in self.winCards):
                         pygame.draw.rect(self.win, (0, 0, 255),
-                                         self.zoom(((43 + (j * 96)) - j // 5), ((81 + (i * 68)) - i // 2), 88, 65),
+                                         self.zoom((42 + (j * 96)), (80 + (i * 68)), 88, 65),
                                          border_radius=5)
                 if self.board[i][j] == highlight:
                     pygame.draw.rect(self.win, (255, 255, 0),
-                                     self.zoom(((43 + (j * 96)) - j // 5), ((81 + (i * 68)) - i // 2), 88, 65),
+                                     self.zoom((42 + (j * 96)), (80 + (i * 68)), 88, 65),
                                      border_radius=5)
                 elif highlight[1] == 'J':
                     if highlight[0] == 'H' or 'S' == highlight[0]:
@@ -203,13 +203,13 @@ class GameScreen:
                         self.is_five(tester_board)
                         if (len(self.board[i][j]) == 4) and (self.sequence_no == self.detail):
                             pygame.draw.rect(self.win, (255, 255, 0),
-                                             self.zoom(((43 + (j * 96)) - j // 5), ((81 + (i * 68)) - i // 2), 88, 65),
+                                             self.zoom((42 + (j * 96)), (80 + (i * 68)), 88, 65),
                                              border_radius=5)
                     elif not (self.board[i][j] == 'xx') and len(self.board[i][j]) == 2:
                         pygame.draw.rect(self.win, (255, 255, 0),
-                                         self.zoom(((43 + (j * 96)) - j // 5), ((81 + (i * 68)) - i // 2), 88, 65),
+                                         self.zoom((42 + (j * 96)), (80 + (i * 68)), 88, 65),
                                          border_radius=5)
-                card = pygame.Rect(self.zoom((45 + (j * 96)), (83 + (i * 68)), 84, 61))
+                card = pygame.Rect(self.zoom((42 + (j * 96)), (80 + (i * 68)), 88, 65))
                 if mouse and card.collidepoint(pos):
                     return_txt = 'CARD' + str(i) + str(j)
         self.win.blit(self.BoardCards, self.zoom(37, 72))
