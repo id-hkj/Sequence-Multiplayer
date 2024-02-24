@@ -11,7 +11,7 @@ pygame.font.init()
 
 class GameScreen:
 
-    def __init__(self, zr, win):
+    def __init__(self, win):
         self.ending = True
         self.name = ""
         self.card_remover = 0
@@ -27,10 +27,9 @@ class GameScreen:
         self.board = []
         self.n = None
         self.gameEnded = False
-        self.zr = zr
         self.win = win
         self.scene = 'g'
-        self.width = int(1025 // self.zr)
+        self.width = 1025
         self.card_select = 'xy'
         self.clicked = ''
         self.card_selected = False
@@ -45,18 +44,18 @@ class GameScreen:
                       'DA', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D1', 'DJ', 'DQ', 'DK',
                       'CA', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9', 'C1', 'CJ', 'CQ', 'CK',
                       'SA', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S1', 'SJ', 'SQ', 'SK']
+        self.pos = (0, 0)
         # IMAGES
         self.BoardCards = pygame.image.load(os.path.join('Sequence!!!.png')).convert_alpha()
         self.USChip = pygame.image.load(os.path.join('Blue.png')).convert_alpha()
         self.AIChip = pygame.image.load(os.path.join('Red.png')).convert_alpha()
         self.GRChip = pygame.image.load(os.path.join('Green.png')).convert_alpha()
-        self.USChip = pygame.transform.smoothscale(self.USChip, (int(50 // self.zr), int(50 // self.zr)))
-        self.AIChip = pygame.transform.smoothscale(self.AIChip, (int(50 // self.zr), int(50 // self.zr)))
-        self.GRChip = pygame.transform.smoothscale(self.GRChip, (int(50 // self.zr), int(50 // self.zr)))
-        self.mini_USChip = pygame.transform.smoothscale(self.USChip, (int(15 // self.zr), int(15 // self.zr)))
-        self.mini_AIChip = pygame.transform.smoothscale(self.AIChip, (int(15 // self.zr), int(15 // self.zr)))
-        self.mini_GRChip = pygame.transform.smoothscale(self.GRChip, (int(15 // self.zr), int(15 // self.zr)))
-        self.BoardCards = pygame.transform.smoothscale(self.BoardCards, (int(960 // self.zr), int(689 // self.zr)))
+        self.USChip = pygame.transform.smoothscale(self.USChip, (50, 50))
+        self.AIChip = pygame.transform.smoothscale(self.AIChip, (50, 50))
+        self.GRChip = pygame.transform.smoothscale(self.GRChip, (50, 50))
+        self.mini_USChip = pygame.transform.smoothscale(self.USChip, (15, 15))
+        self.mini_AIChip = pygame.transform.smoothscale(self.AIChip, (15, 15))
+        self.mini_GRChip = pygame.transform.smoothscale(self.GRChip, (15, 15))
         self.cardIMGs = {}
         self.legend_prep = []
         self.data = None
@@ -64,13 +63,7 @@ class GameScreen:
             self.cardIMGs[str(self.cards[cardNo])] = pygame.image.load(
                 os.path.join('Cards', str(self.cards[cardNo]) + '.png')).convert_alpha()
             self.cardIMGs[str(self.cards[cardNo])] = pygame.transform.smoothscale(
-                self.cardIMGs[str(self.cards[cardNo])], (int(80 // self.zr), int(112 // self.zr)))
-
-    def zoom(self, *args):
-        return_tup = ()
-        for el in args:
-            return_tup += (int(el // self.zr),)
-        return return_tup
+                self.cardIMGs[str(self.cards[cardNo])], (80, 112))
 
     def connect(self, ip, name):
         try:
@@ -192,20 +185,19 @@ class GameScreen:
         self.card_change_stage = 4
 
     def draw_board(self, mouse: bool = False, highlight: str = 'xy') -> str:
-        pos = pygame.mouse.get_pos()
-        pygame.draw.rect(self.win, (255, 255, 255), self.zoom(34, 72, 967, 692), border_radius=5)
-        pygame.draw.rect(self.win, (15, 112, 25), self.zoom(35, 73, 965, 690), border_radius=5)
+        pygame.draw.rect(self.win, (255, 255, 255), (34, 72, 967, 692), border_radius=5)
+        pygame.draw.rect(self.win, (15, 112, 25), (35, 73, 965, 690), border_radius=5)
         return_txt = ''
         for i in range(10):
             for j in range(10):
                 if self.winCards:
                     if (str(i) + str(j) in self.highlighter) or (str(i) + str(j) in self.winCards):
                         pygame.draw.rect(self.win, (0, 0, 255),
-                                         self.zoom((42 + (j * 96)), (80 + (i * 68)), 88, 65),
+                                         ((42 + (j * 96)), (80 + (i * 68)), 88, 65),
                                          border_radius=5)
                 if self.board[i][j] == highlight:
                     pygame.draw.rect(self.win, (255, 255, 0),
-                                     self.zoom((42 + (j * 96)), (80 + (i * 68)), 88, 65),
+                                     ((42 + (j * 96)), (80 + (i * 68)), 88, 65),
                                      border_radius=5)
                 elif highlight[1] == 'J':
                     if highlight[0] == 'H' or 'S' == highlight[0]:
@@ -214,44 +206,40 @@ class GameScreen:
                         self.is_five(tester_board)
                         if (len(self.board[i][j]) == 4) and (self.sequence_no == self.detail):
                             pygame.draw.rect(self.win, (255, 255, 0),
-                                             self.zoom((42 + (j * 96)), (80 + (i * 68)), 88, 65),
+                                             ((42 + (j * 96)), (80 + (i * 68)), 88, 65),
                                              border_radius=5)
                     elif not (self.board[i][j] == 'xx') and len(self.board[i][j]) == 2:
                         pygame.draw.rect(self.win, (255, 255, 0),
-                                         self.zoom((42 + (j * 96)), (80 + (i * 68)), 88, 65),
+                                         ((42 + (j * 96)), (80 + (i * 68)), 88, 65),
                                          border_radius=5)
-                card = pygame.Rect(self.zoom((42 + (j * 96)), (80 + (i * 68)), 88, 65))
-                if mouse and card.collidepoint(pos):
+                card = pygame.Rect(((42 + (j * 96)), (80 + (i * 68)), 88, 65))
+                if mouse and card.collidepoint(self.pos):
                     return_txt = 'CARD' + str(i) + str(j)
-        self.win.blit(self.BoardCards, self.zoom(37, 72))
+        self.win.blit(self.BoardCards, (37, 72))
         for i in range(10):
             for j in range(10):
                 if self.board[i][j][-2:] == 'US':
-                    pygame.draw.circle(self.win, (0, 0, 0), self.zoom((87 + (j * 96)), (110 + (i * 68))),
-                                       int(27 // self.zr))
-                    self.win.blit(self.USChip, self.zoom((62 + (j * 96)), (85 + (i * 68))))
+                    pygame.draw.circle(self.win, (0, 0, 0), ((87 + (j * 96)), (110 + (i * 68))), 27)
+                    self.win.blit(self.USChip, ((62 + (j * 96)), (85 + (i * 68))))
                 elif self.board[i][j][-2:] == 'AI':
-                    pygame.draw.circle(self.win, (0, 0, 0), self.zoom((87 + (j * 96)), (110 + (i * 68))),
-                                       int(27 // self.zr))
-                    self.win.blit(self.AIChip, self.zoom((62 + (j * 96)), (85 + (i * 68))))
+                    pygame.draw.circle(self.win, (0, 0, 0), ((87 + (j * 96)), (110 + (i * 68))), 27)
+                    self.win.blit(self.AIChip, ((62 + (j * 96)), (85 + (i * 68))))
                 elif self.board[i][j][-2:] == 'GR':
-                    pygame.draw.circle(self.win, (0, 0, 0), self.zoom((87 + (j * 96)), (110 + (i * 68))),
-                                       int(27 // self.zr))
-                    self.win.blit(self.GRChip, self.zoom((62 + (j * 96)), (85 + (i * 68))))
+                    pygame.draw.circle(self.win, (0, 0, 0), ((87 + (j * 96)), (110 + (i * 68))), 27)
+                    self.win.blit(self.GRChip, ((62 + (j * 96)), (85 + (i * 68))))
         return return_txt
 
     def draw_cards(self) -> str:
-        pos = pygame.mouse.get_pos()
         return_txt = ''
         for i in range(len(self.cards)):
             if self.cards[i] == 'NO':
                 break
             if self.cards[i] == self.card_select:
-                pygame.draw.rect(self.win, (255, 255, 0), self.zoom(self.card_x[i] - 2, self.card_y[i] - 2,
-                                                                    84, 116), border_radius=5)
-            card = pygame.Rect(self.zoom(self.card_x[i], self.card_y[i], 80, 112))
-            self.win.blit(self.cardIMGs[str(self.cards[i])], self.zoom(self.card_x[i], self.card_y[i]))
-            if self.go and card.collidepoint(pos):
+                pygame.draw.rect(self.win, (255, 255, 0), (self.card_x[i] - 2, self.card_y[i] - 2, 84, 116),
+                                 border_radius=5)
+            card = pygame.Rect((self.card_x[i], self.card_y[i], 80, 112))
+            self.win.blit(self.cardIMGs[str(self.cards[i])], (self.card_x[i], self.card_y[i]))
+            if self.go and card.collidepoint(self.pos):
                 return_txt = 'USER' + str(i)
         return return_txt
 
@@ -328,7 +316,7 @@ class GameScreen:
     def top_text(self, text):
         text = self.Font.render(text, True, (255, 255, 255))
         x_val = int(self.width // 2 - text.get_width() // 2)
-        self.win.blit(text, (x_val, int(25 // self.zr)))
+        self.win.blit(text, (x_val, 25))
 
     def card_positions(self):
         card_len = len(self.cards)
@@ -400,17 +388,18 @@ class GameScreen:
                 self.legend_prep.append(self.legend_prep[1].get_width() + 25)
 
     def render_legend(self):
-        pygame.draw.rect(self.win, (251, 180, 41), self.zoom(34, self.legend_prep[6] - 1, self.legend_prep[8] + 2,
-                                                             self.legend_prep[7] + 2), border_radius=5)
-        pygame.draw.rect(self.win, (15, 112, 25), self.zoom(35, self.legend_prep[6], self.legend_prep[8],
-                                                            self.legend_prep[7]), border_radius=5)
+        pygame.draw.rect(self.win, (251, 180, 41), (34, self.legend_prep[6] - 1, self.legend_prep[8] + 2,
+                                                    self.legend_prep[7] + 2), border_radius=5)
+        pygame.draw.rect(self.win, (15, 112, 25), (35, self.legend_prep[6], self.legend_prep[8],
+                                                   self.legend_prep[7]), border_radius=5)
         chips = [self.mini_USChip, self.mini_AIChip, self.mini_GRChip]
         for i in range(3):
-            self.win.blit(self.legend_prep[i], self.zoom(55, self.legend_prep[i + 3]))
-            self.win.blit(chips[i], self.zoom(37, self.legend_prep[i + 3] - 4))
+            self.win.blit(self.legend_prep[i], (55, self.legend_prep[i + 3]))
+            self.win.blit(chips[i], (37, self.legend_prep[i + 3] - 4))
 
-    def main_loop(self, go):
+    def main_loop(self, go, mouse):
         self.go = go
+        self.pos = mouse
         if self.gameEnded:
             self.card_positions()
             self.draw_cards()
