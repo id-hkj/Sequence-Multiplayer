@@ -31,11 +31,11 @@ class InputBox:
         self.max_asc = max_asc
         self.char_w = font.render('.', True, (0, 0, 0)).get_width()
 
-    def handle_event(self, event):
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if self.rect.collidepoint(event.pos):
+    def handle_event(self, click, key_info, mouse_pos):
+        if click:
+            if self.rect.collidepoint(mouse_pos):
                 self.active = True
-                self.char_on = event.pos[0] - self.x - 3
+                self.char_on = mouse_pos[0] - self.x - 3
                 self.char_on = int(self.char_on / 14) + 1 if self.char_on % 14 > 7 else int(self.char_on / 14)
                 if self.char_on > len(self.text):
                     self.char_on = len(self.text)
@@ -44,27 +44,27 @@ class InputBox:
             else:
                 self.active = False
                 self.color = pygame.Color('lightskyblue3')
-        elif event.type == pygame.KEYDOWN and self.active:
-            if event.key == pygame.K_BACKSPACE:
+        elif key_info and self.active:
+            if key_info.key == pygame.K_BACKSPACE:
                 self.text = self.text[:self.char_on - 1] + self.text[self.char_on:]
                 if self.char_on != 0:
                     self.char_on -= 1
-            elif event.key == pygame.K_LEFT:
+            elif key_info.key == pygame.K_LEFT:
                 if self.char_on != 0:
                     self.char_on -= 1
-            elif event.key == pygame.K_RIGHT:
+            elif key_info.key == pygame.K_RIGHT:
                 if self.char_on != self.max and self.char_on != len(self.text):
                     self.char_on += 1
-            elif event.key == pygame.K_DELETE:
+            elif key_info.key == pygame.K_DELETE:
                 self.text = self.text[:self.char_on] + self.text[self.char_on + 1:]
-            elif event.key == pygame.K_HOME:
+            elif key_info.key == pygame.K_HOME:
                 self.char_on = 0
-            elif event.key == pygame.K_END:
+            elif key_info.key == pygame.K_END:
                 self.char_on = len(self.text)
-            elif event.unicode:
-                if (self.min_asc <= ord(event.unicode) <= self.max_asc) and (len(self.text) < self.max):
+            elif key_info.unicode:
+                if (self.min_asc <= ord(key_info.unicode) <= self.max_asc) and (len(self.text) < self.max):
                     self.text = list(self.text)
-                    self.text.insert(self.char_on, event.unicode)
+                    self.text.insert(self.char_on, key_info.unicode)
                     self.text = ''.join(self.text)
                     self.char_on += 1
             # Re-render the text.
@@ -108,8 +108,8 @@ class OptionBox:
                 self.rect.x, self.rect.y + self.rect.height, self.rect.width, self.rect.height * len(self.option_list))
             pygame.draw.rect(surf, (0, 0, 0), outer_rect, 2)
 
-    def update(self, event_list):
-        my_pos = pygame.mouse.get_pos()
+    def update(self, click, mouse):
+        my_pos = mouse
         self.menu_active = self.rect.collidepoint(my_pos)
 
         self.active_option = -1
@@ -123,14 +123,13 @@ class OptionBox:
         if not self.menu_active and self.active_option == -1:
             self.draw_menu = False
 
-        for event in event_list:
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                if self.menu_active:
-                    self.draw_menu = not self.draw_menu
-                elif self.draw_menu and self.active_option >= 0:
-                    self.selected = self.active_option
-                    self.draw_menu = False
-                    return self.active_option
+        if click:
+            if self.menu_active:
+                self.draw_menu = not self.draw_menu
+            elif self.draw_menu and self.active_option >= 0:
+                self.selected = self.active_option
+                self.draw_menu = False
+                return self.active_option
         return -1
 
 
@@ -171,15 +170,19 @@ class Nav:
         self.zr = 1920 / self.mon_width
         self.win_width = int(1025 // self.zr)
         self.win_height = int(900 // self.zr)
+        self.w_zr = 1025 / self.win_width
+        self.h_zr = 900 / self.win_height
         self.run = True
         self.events = []
-        self.win = pygame.display.set_mode((self.win_width, self.win_height))
+        self.win = pygame.Surface((1025, 900))
+        self.real_win = pygame.display.set_mode((self.win_width, self.win_height), pygame.RESIZABLE)
         self.clock = pygame.time.Clock()
         self.scene = 'h'
         self.c = False
-        self.Font = pygame.font.Font(None, int(150 / self.zr))
-        self.Heading = pygame.font.Font(None, int(50 // self.zr))
-        self.Text = pygame.font.Font(None, int(40 // self.zr))
+        self.key = False
+        self.Font = pygame.font.Font(None, 150)
+        self.Heading = pygame.font.Font(None, 50)
+        self.Text = pygame.font.Font(None, 40)
         self.mouse_pos = pygame.mouse.get_pos()
         self.Team_Count = 2
         self.Player_Count = 1
@@ -189,31 +192,31 @@ class Nav:
         self.out_t_no = 151
 
         # BUTTONS/DROPDOWNS
-        self.play = Button(self.zoom(224, 410, 578, 125), 'PLAY', self.win, self.Font)
-        self.how_to = Button(self.zoom(224, 550, 578, 50), 'HOW TO PLAY', self.win, self.Heading)
-        self.back = Button(self.zoom(20, 830, 115, 50), 'BACK', self.win, self.Heading)
-        self.create_b = Button(self.zoom(224, 310, 578, 125), 'CREATE', self.win, self.Font)
-        self.join_b = Button(self.zoom(224, 450, 578, 125), 'JOIN', self.win, self.Font)
-        self.join_go = Button(self.zoom(800, 150, 115, 75), 'GO', self.win, self.Heading)
-        self.create_go = Button(self.zoom(775, 200, 200, 75), 'CREATE', self.win, self.Heading)
-        self.return_home = Button(self.zoom(828, 12, 170, 50), 'EXIT GAME', self.win, self.Text, rad=5)
-        self.confirm_y = Button(self.zoom(290, 465, 220, 45), 'Yes', self.win, self.Text, rad=5)
-        self.confirm_n = Button(self.zoom(525, 465, 220, 45), 'No', self.win, self.Text, rad=5)
-        self.team_no = OptionBox(self.zoom(50, 200, 25, 32), (150, 150, 150), (100, 200, 255), self.Text, ["2", "3"])
-        self.player_no = OptionBox(self.zoom(50, 240, 25, 32), (150, 150, 150), (100, 200, 255), self.Text,
+        self.play = Button((224, 410, 578, 125), 'PLAY', self.win, self.Font)
+        self.how_to = Button((224, 550, 578, 50), 'HOW TO PLAY', self.win, self.Heading)
+        self.back = Button((20, 830, 115, 50), 'BACK', self.win, self.Heading)
+        self.create_b = Button((224, 310, 578, 125), 'CREATE', self.win, self.Font)
+        self.join_b = Button((224, 450, 578, 125), 'JOIN', self.win, self.Font)
+        self.join_go = Button((800, 150, 115, 75), 'GO', self.win, self.Heading)
+        self.create_go = Button((775, 200, 200, 75), 'CREATE', self.win, self.Heading)
+        self.return_home = Button((828, 12, 170, 50), 'EXIT GAME', self.win, self.Text, rad=5)
+        self.confirm_y = Button((290, 465, 220, 45), 'Yes', self.win, self.Text, rad=5)
+        self.confirm_n = Button((525, 465, 220, 45), 'No', self.win, self.Text, rad=5)
+        self.team_no = OptionBox((50, 200, 25, 32), (150, 150, 150), (100, 200, 255), self.Text, ["2", "3"])
+        self.player_no = OptionBox((50, 240, 25, 32), (150, 150, 150), (100, 200, 255), self.Text,
                                    self.PPT_lst)
         for i in range(20):
             self.special_update()
 
         # JOIN/CREATE
-        self.mono_font = pygame.font.SysFont('consolas', int(25 // self.zr))
-        self.name_enter = InputBox(self.zoom(210, 150, 220, 30), 15, 'Name', 33, 126, self.mono_font)
-        self.ip_enter = InputBox(self.zoom(210, 200, 220, 30), 15, 'IP Address', 46, 57, self.mono_font)
+        self.mono_font = pygame.font.SysFont('consolas', 25)
+        self.name_enter = InputBox((210, 150, 220, 30), 15, 'Name', 33, 126, self.mono_font)
+        self.ip_enter = InputBox((210, 200, 220, 30), 15, 'IP Address', 46, 57, self.mono_font)
         self.ip_error = False
         self.name_error = False
 
         # MAIN GAME
-        self.game = GameScreen(self.zr, self.win)
+        self.game = GameScreen(self.win)
 
         # Other Instance Check!
         if not os.path.exists('SEQUENCE_GAME_LRP2024'):
@@ -226,20 +229,14 @@ class Nav:
             messagebox.showerror('error', 'You cannot run multiple instances of this application at any one time.')
             print('OTHER RUNNING!!!')
 
-    def zoom(self, *args):
-        return_tup = ()
-        for el in args:
-            return_tup += (int(el // self.zr),)
-        return return_tup
-
     def draw_home(self):
-        self.win.blit(self.Font.render('SEQUENCE', True, (255, 255, 255)), self.zoom(224, 300))
+        self.win.blit(self.Font.render('SEQUENCE', True, (255, 255, 255)), (224, 300))
         # Buttons
         self.play.render()
         self.how_to.render()
         if self.out_t_no < 151:
             self.win.blit(self.Text.render('Game ended because someone disconnected from server.', True, (255, 0, 0)),
-                          self.zoom(124, 20))
+                          (124, 20))
             self.out_t_no += 1
         if self.play.is_clicked(self.c, self.mouse_pos):
             self.scene = 'p'
@@ -247,41 +244,41 @@ class Nav:
             self.scene = 't'
 
     def tutorial(self):
-        self.win.blit(self.Font.render('GAME RULES', True, (255, 255, 255)), self.zoom(175, 15))
+        self.win.blit(self.Font.render('GAME RULES', True, (255, 255, 255)), (175, 15))
         # AIM section
-        pygame.draw.rect(self.win, (251, 180, 41), self.zoom(14, 129, 422, 192))
-        pygame.draw.rect(self.win, (15, 50, 15), self.zoom(15, 130, 420, 190))
-        self.win.blit(self.Heading.render('AIM:', True, (255, 255, 255)), self.zoom(166, 140))
-        self.win.blit(self.Text.render('Get a sequence of 5 in a row.', True, (255, 255, 255)), self.zoom(22, 180))
-        self.win.blit(self.Text.render('2 TEAMS: 2 sequences to win', True, (255, 255, 255)), self.zoom(22, 225))
-        self.win.blit(self.Text.render('3 TEAMS: 1 sequence to win.', True, (255, 255, 255)), self.zoom(22, 270))
+        pygame.draw.rect(self.win, (251, 180, 41), (14, 129, 422, 192))
+        pygame.draw.rect(self.win, (15, 50, 15), (15, 130, 420, 190))
+        self.win.blit(self.Heading.render('AIM:', True, (255, 255, 255)), (166, 140))
+        self.win.blit(self.Text.render('Get a sequence of 5 in a row.', True, (255, 255, 255)), (22, 180))
+        self.win.blit(self.Text.render('2 TEAMS: 2 sequences to win', True, (255, 255, 255)), (22, 225))
+        self.win.blit(self.Text.render('3 TEAMS: 1 sequence to win.', True, (255, 255, 255)), (22, 270))
         # On Your Turn
-        pygame.draw.rect(self.win, (251, 180, 41), self.zoom(444, 129, 572, 192))
-        pygame.draw.rect(self.win, (15, 50, 15), self.zoom(445, 130, 570, 190))
-        self.win.blit(self.Heading.render('ON YOUR TURN:', True, (255, 255, 255)), self.zoom(584, 140))
+        pygame.draw.rect(self.win, (251, 180, 41), (444, 129, 572, 192))
+        pygame.draw.rect(self.win, (15, 50, 15), (445, 130, 570, 190))
+        self.win.blit(self.Heading.render('ON YOUR TURN:', True, (255, 255, 255)), (584, 140))
         self.win.blit(self.Text.render('1. Select a card to play (You can change', True, (255, 255, 255)),
-                      self.zoom(452, 180))
+                      (452, 180))
         self.win.blit(self.Text.render('your selection by clicking another card)', True, (255, 255, 255)),
-                      self.zoom(460, 215))
+                      (460, 215))
         self.win.blit(self.Text.render('2. Click a square on the gameboard', True, (255, 255, 255)),
-                      self.zoom(452, 260))
+                      (452, 260))
         # JACKS
-        pygame.draw.rect(self.win, (251, 180, 41), self.zoom(14, 329, 482, 192))
-        pygame.draw.rect(self.win, (15, 50, 15), self.zoom(15, 330, 480, 190))
-        self.win.blit(self.Heading.render('JACKS:', True, (255, 255, 255)), self.zoom(154, 340))
-        self.win.blit(self.Text.render('2-EYED JACKS: Wild', True, (255, 255, 255)), self.zoom(22, 380))
-        self.win.blit(self.Text.render('1-EYED JACKS: Remove counter', True, (255, 255, 255)), self.zoom(22, 425))
+        pygame.draw.rect(self.win, (251, 180, 41), (14, 329, 482, 192))
+        pygame.draw.rect(self.win, (15, 50, 15), (15, 330, 480, 190))
+        self.win.blit(self.Heading.render('JACKS:', True, (255, 255, 255)), (154, 340))
+        self.win.blit(self.Text.render('2-EYED JACKS: Wild', True, (255, 255, 255)), (22, 380))
+        self.win.blit(self.Text.render('1-EYED JACKS: Remove counter', True, (255, 255, 255)), (22, 425))
         self.win.blit(self.Text.render('UNLESS counter part of sequence', True, (255, 255, 255)),
-                      self.zoom(30, 470))
+                      (30, 470))
         # THE GAMEBOARD
-        pygame.draw.rect(self.win, (251, 180, 41), self.zoom(509, 329, 507, 192))
-        pygame.draw.rect(self.win, (15, 50, 15), self.zoom(510, 330, 505, 190))
-        self.win.blit(self.Heading.render('THE GAMEBOARD:', True, (255, 255, 255)), self.zoom(609, 340))
+        pygame.draw.rect(self.win, (251, 180, 41), (509, 329, 507, 192))
+        pygame.draw.rect(self.win, (15, 50, 15), (510, 330, 505, 190))
+        self.win.blit(self.Heading.render('THE GAMEBOARD:', True, (255, 255, 255)), (609, 340))
         self.win.blit(self.Text.render('Each Card (except the jacks) are', True, (255, 255, 255)),
-                      self.zoom(517, 380))
-        self.win.blit(self.Text.render('pictured twice.', True, (255, 255, 255)), self.zoom(517, 425))
+                      (517, 380))
+        self.win.blit(self.Text.render('pictured twice.', True, (255, 255, 255)), (517, 425))
         self.win.blit(self.Text.render('The four corners are freebies.', True, (255, 255, 255)),
-                      self.zoom(517, 470))
+                      (517, 470))
         # Buttons
         self.back.render()
         if self.back.is_clicked(self.c, self.mouse_pos):
@@ -309,24 +306,23 @@ class Nav:
             self.scene = 'h'
 
     def join(self):
-        for event in self.events:
-            self.ip_enter.handle_event(event)
-            self.name_enter.handle_event(event)
+        self.ip_enter.handle_event(self.c, self.key, self.mouse_pos)
+        self.name_enter.handle_event(self.c, self.key, self.mouse_pos)
         if self.ip_enter.rect.collidepoint(self.mouse_pos) or self.name_enter.rect.collidepoint(self.mouse_pos):
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_IBEAM)
         else:
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
         self.ip_enter.draw(self.win)
         self.name_enter.draw(self.win)
-        self.win.blit(self.Font.render('JOIN A GAME', True, (255, 255, 255)), self.zoom(175, 15))
+        self.win.blit(self.Font.render('JOIN A GAME', True, (255, 255, 255)), (175, 15))
         if self.name_error:
-            self.win.blit(self.Text.render('No name entered', True, (236, 62, 19)), self.zoom(520, 153))
+            self.win.blit(self.Text.render('No name entered', True, (236, 62, 19)), (520, 153))
         elif self.taken:
-            self.win.blit(self.Text.render('Name Taken', True, (236, 62, 19)), self.zoom(520, 153))
+            self.win.blit(self.Text.render('Name Taken', True, (236, 62, 19)), (520, 153))
         if self.ip_error:
-            self.win.blit(self.Text.render('Invalid IP address', True, (236, 62, 19)), self.zoom(520, 203))
-        self.win.blit(self.Text.render('Your Name: ', True, (255, 255, 255)), self.zoom(50, 153))
-        self.win.blit(self.Text.render('IP Address:', True, (255, 255, 255)), self.zoom(50, 203))
+            self.win.blit(self.Text.render('Invalid IP address', True, (236, 62, 19)), (520, 203))
+        self.win.blit(self.Text.render('Your Name: ', True, (255, 255, 255)), (50, 153))
+        self.win.blit(self.Text.render('IP Address:', True, (255, 255, 255)), (50, 203))
         self.back.render()
         self.join_go.render()
         if self.join_go.is_clicked(self.c, self.mouse_pos):
@@ -347,15 +343,14 @@ class Nav:
             self.scene = 'p'
 
     def create(self):
-        for event in self.events:
-            self.name_enter.handle_event(event)
+        self.name_enter.handle_event(self.c, self.key, self.mouse_pos)
         if self.name_enter.rect.collidepoint(self.mouse_pos):
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_IBEAM)
         else:
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
         self.name_enter.draw(self.win)
-        selected_p = int(self.player_no.update(self.events)) if not self.team_no.draw_menu else -1
-        selected_t = int(self.team_no.update(self.events))
+        selected_p = int(self.player_no.update(self.c, self.mouse_pos)) if not self.team_no.draw_menu else -1
+        selected_t = int(self.team_no.update(self.c, self.mouse_pos))
         if selected_t != -1:
             self.Team_Count = selected_t + 2
             self.player_no.option_list = self.PPT_lst[:6 - 2 * selected_t]
@@ -364,16 +359,16 @@ class Nav:
                 self.Player_Count = 1
         if selected_p != -1:
             self.Player_Count = selected_p + 1
-        self.win.blit(self.Font.render('CREATE A GAME', True, (255, 255, 255)), self.zoom(70, 15))
-        self.win.blit(self.Text.render('Your Name: ', True, (255, 255, 255)), self.zoom(50, 153))
+        self.win.blit(self.Font.render('CREATE A GAME', True, (255, 255, 255)), (70, 15))
+        self.win.blit(self.Text.render('Your Name: ', True, (255, 255, 255)), (50, 153))
         if self.name_error:
-            self.win.blit(self.Text.render('No name entered', True, (236, 62, 19)), self.zoom(520, 153))
+            self.win.blit(self.Text.render('No name entered', True, (236, 62, 19)), (520, 153))
         self.back.render()
         self.create_go.render()
         self.player_no.draw(self.win)
         self.team_no.draw(self.win)
-        self.win.blit(self.Text.render('TEAMS', True, (255, 255, 255)), self.zoom(80, 205))
-        self.win.blit(self.Text.render('PLAYERS PER TEAM', True, (255, 255, 255)), self.zoom(80, 245))
+        self.win.blit(self.Text.render('TEAMS', True, (255, 255, 255)), (80, 205))
+        self.win.blit(self.Text.render('PLAYERS PER TEAM', True, (255, 255, 255)), (80, 245))
         if self.create_go.is_clicked(self.c, self.mouse_pos):
             if self.name_enter.text and self.name_enter.text != 'YOU':
                 start_new_thread(server_start, (self.Team_Count * self.Player_Count, self.Team_Count))
@@ -437,18 +432,18 @@ class Nav:
         self.win.blit(shape_surf, (0, 0, self.win_width, self.win_height))
 
         # Prompt Box
-        pygame.draw.rect(self.win, (251, 180, 41), self.zoom(264, 26 * self.game_opacity - 199, 507, 197),
+        pygame.draw.rect(self.win, (251, 180, 41), (264, 26 * self.game_opacity - 199, 507, 197),
                          border_radius=5)
-        pygame.draw.rect(self.win, (15, 50, 15), self.zoom(265, 26 * self.game_opacity - 198, 505, 195),
+        pygame.draw.rect(self.win, (15, 50, 15), (265, 26 * self.game_opacity - 198, 505, 195),
                          border_radius=5)
         self.win.blit(self.Text.render('ARE YOU SURE YOU WANT TO', True, (255, 255, 255)),
-                      self.zoom(310, self.game_opacity * 26 - 185))
+                      (310, self.game_opacity * 26 - 185))
         self.win.blit(self.Text.render('EXIT THE GAME?', True, (255, 255, 255)),
-                      self.zoom(397, self.game_opacity * 26 - 155))
+                      (397, self.game_opacity * 26 - 155))
         self.win.blit(self.Text.render('This will also end the game for', True, (255, 255, 255)),
-                      self.zoom(308, self.game_opacity * 26 - 120))
+                      (308, self.game_opacity * 26 - 120))
         self.win.blit(self.Text.render('everyone else playing.', True, (255, 255, 255)),
-                      self.zoom(368, self.game_opacity * 26 - 90))
+                      (368, self.game_opacity * 26 - 90))
         self.confirm_y.render()
         self.confirm_n.render()
         if self.confirm_y.is_clicked(self.c, self.mouse_pos):
@@ -475,14 +470,26 @@ class Nav:
     def main_loop(self):
         while self.run:
             self.c = False
-            self.mouse_pos = pygame.mouse.get_pos()
+            self.key = False
+            self.mouse_pos = list(pygame.mouse.get_pos())
+            self.mouse_pos[0] = int(self.mouse_pos[0] * self.w_zr)
+            self.mouse_pos[1] = int(self.mouse_pos[1] * self.h_zr)
+            self.mouse_pos = tuple(self.mouse_pos)
             self.events = pygame.event.get()
             for event in self.events:
                 if event.type == pygame.QUIT:
                     self.run = False
                     break
-                if event.type == pygame.MOUSEBUTTONUP:
+                elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                     self.c = True
+                elif event.type == pygame.KEYDOWN:
+                    self.key = event
+                elif event.type == pygame.VIDEORESIZE:
+                    self.win_width = event.w
+                    self.win_height = event.h
+                    self.w_zr = 1025 / self.win_width
+                    self.h_zr = 900 / self.win_height
+                    self.real_win = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
             self.win.fill((9, 66, 19))
             if self.scene == 'h':  # Home
                 self.draw_home()
@@ -495,7 +502,7 @@ class Nav:
             elif self.scene == 'j':  # Join new game
                 self.join()
             elif self.scene == 'g':  # Running the Game
-                x = self.game.main_loop(self.c)
+                x = self.game.main_loop(self.c, self.mouse_pos)
                 self.return_home.render()
                 if self.return_home.is_clicked(self.c, self.mouse_pos):
                     if not self.game.gameEnded:
@@ -508,9 +515,11 @@ class Nav:
                 if x == 'BROKEN':
                     self.out_t_no = 0
                     self.scene = 'h'
-                    self.game.__init__(self.zr, self.win)
-            self.clock.tick(30)
+                    self.game.__init__(self.win)
+            transformed_screen = pygame.transform.scale(self.win, (self.win_width, self.win_height))
+            self.real_win.blit(transformed_screen, (0, 0))
             pygame.display.flip()
+            self.clock.tick(30)
         os.close(self.fd)
         os.unlink('SEQUENCE_GAME_LRP2024')
         if self.scene == 'g':
