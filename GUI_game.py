@@ -180,6 +180,17 @@ class GameScreen:
         else:
             return ''
 
+    def end_game(self):
+        if 'YOU' in self.player_names['b']:
+            self.name = 'US'
+        elif 'YOU' in self.player_names['r']:
+            self.name = 'AI'
+        elif 'YOU' in self.player_names['g']:
+            self.name = 'GR'
+        self.gameEnded = True
+        del self.n
+        self.card_change_stage = 4
+
     def draw_board(self, mouse: bool = False, highlight: str = 'xy') -> str:
         pos = pygame.mouse.get_pos()
         pygame.draw.rect(self.win, (255, 255, 255), self.zoom(34, 72, 967, 692), border_radius=5)
@@ -415,6 +426,8 @@ class GameScreen:
             self.draw_board(self.go, self.card_select)
         else:
             self.data = self.n.send(self.reply)
+            if self.data == 'LEFT_GAME' or self.data is None:
+                return 'BROKEN'
             self.update_data()
             self.card_positions()
             if self.top_txt == self.name:
@@ -429,15 +442,7 @@ class GameScreen:
             if not self.turn:
                 self.reply = 'ping'
                 if self.is_five(self.board):
-                    if 'YOU' in self.player_names['b']:
-                        self.name = 'US'
-                    elif 'YOU' in self.player_names['r']:
-                        self.name = 'AI'
-                    elif 'YOU' in self.player_names['g']:
-                        self.name = 'GR'
-                    self.gameEnded = True
-                    del self.n
-                    self.card_change_stage = 4
+                    self.end_game()
             else:
                 self.detail = self.sequence_no
                 self.card_select = self.main(self.cards)
@@ -455,26 +460,8 @@ class GameScreen:
                         self.card_remover = self.cards.index(self.reply[2:])
                         self.card_change_stage = 1
                     else:
-                        if 'YOU' in self.player_names['b']:
-                            self.name = 'US'
-                        elif 'YOU' in self.player_names['r']:
-                            self.name = 'AI'
-                        elif 'YOU' in self.player_names['g']:
-                            self.name = 'GR'
-                        self.gameEnded = True
-                        del self.n
-                        self.card_change_stage = 4
+                        self.end_game()
                     self.reply = 'ping'
-                elif self.is_five(self.board):
-                    if 'YOU' in self.player_names['b']:
-                        self.name = 'US'
-                    elif 'YOU' in self.player_names['r']:
-                        self.name = 'AI'
-                    elif 'YOU' in self.player_names['g']:
-                        self.name = 'GR'
-                    self.gameEnded = True
-                    del self.n
-                    self.card_change_stage = 4
 
     @staticmethod
     def quit():
