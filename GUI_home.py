@@ -167,15 +167,24 @@ class Nav:
         # SETUP
         self.taken = False
         self.mon_width = pygame.display.Info().current_w
+        self.mon_height = pygame.display.Info().current_h
         self.zr = 1920 / self.mon_width
-        self.win_width = int(1025 // self.zr)
-        self.win_height = int(900 // self.zr)
+        if 900 / 1025 > self.mon_height / self.mon_width:
+            x = self.mon_height / 900
+            self.win_width = int(1025 * x)
+            self.win_height = self.mon_height
+            self.scalar = (int((self.mon_width - self.win_width) / 2), 0, self.win_width, self.mon_height)
+        else:
+            x = self.mon_width / 1025
+            self.win_height = int(900 * x)
+            self.win_width = self.mon_width
+            self.scalar = (0, int((self.mon_height - self.win_height) / 2), self.mon_width, self.win_height)
         self.w_zr = 1025 / self.win_width
         self.h_zr = 900 / self.win_height
         self.run = True
         self.events = []
         self.win = pygame.Surface((1025, 900))
-        self.real_win = pygame.display.set_mode((self.win_width, self.win_height), pygame.RESIZABLE)
+        self.real_win = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
         self.clock = pygame.time.Clock()
         self.scene = 'h'
         self.c = False
@@ -472,8 +481,8 @@ class Nav:
             self.c = False
             self.key = False
             self.mouse_pos = list(pygame.mouse.get_pos())
-            self.mouse_pos[0] = int(self.mouse_pos[0] * self.w_zr)
-            self.mouse_pos[1] = int(self.mouse_pos[1] * self.h_zr)
+            self.mouse_pos[0] = int((self.mouse_pos[0] - self.scalar[0]) * self.w_zr)
+            self.mouse_pos[1] = int((self.mouse_pos[1] - self.scalar[1]) * self.h_zr)
             self.mouse_pos = tuple(self.mouse_pos)
             self.events = pygame.event.get()
             for event in self.events:
@@ -484,12 +493,8 @@ class Nav:
                     self.c = True
                 elif event.type == pygame.KEYDOWN:
                     self.key = event
-                elif event.type == pygame.VIDEORESIZE:
-                    self.win_width = event.w
-                    self.win_height = event.h
-                    self.w_zr = 1025 / self.win_width
-                    self.h_zr = 900 / self.win_height
-                    self.real_win = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
+                    if event.key == pygame.K_ESCAPE:
+                        self.run = False
             self.win.fill((9, 66, 19))
             if self.scene == 'h':  # Home
                 self.draw_home()
@@ -511,13 +516,12 @@ class Nav:
                         self.scene = 'h'
                 if self.game_opacity != -1:
                     self.mid_g_leave()
-                    # TODO: Maybe resizable window?
                 if x == 'BROKEN':
                     self.out_t_no = 0
                     self.scene = 'h'
                     self.game.__init__(self.win)
             transformed_screen = pygame.transform.scale(self.win, (self.win_width, self.win_height))
-            self.real_win.blit(transformed_screen, (0, 0))
+            self.real_win.blit(transformed_screen, self.scalar[:2])
             pygame.display.flip()
             self.clock.tick(30)
         os.close(self.fd)
